@@ -1,0 +1,6 @@
+{
+  "name": "AccessAudit",
+  "description": "SaaS platform for website accessibility audits, WCAG 2.2 and ADA compliance testing, agency white-labeling, and client-ready PDF reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
