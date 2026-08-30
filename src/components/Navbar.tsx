@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Sparkles, 
-  ArrowRight, 
-  LayoutDashboard, 
-  Building2, 
-  Sun, 
-  Moon, 
-  Menu, 
+import {
+  ShieldCheck,
+  Sparkles,
+  ArrowRight,
+  LayoutDashboard,
+  Building2,
+  Sun,
+  Moon,
+  Menu,
   X,
   User,
-  ExternalLink
+  LogOut,
 } from 'lucide-react';
-import { PageView } from '../types';
+import { PageView, UserAccount } from '../types';
 
 interface NavbarProps {
   currentView: PageView;
@@ -21,7 +21,9 @@ interface NavbarProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   isLoggedIn?: boolean;
+  currentUser?: UserAccount | null;
   onToggleAuth?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,7 +33,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   theme,
   onToggleTheme,
   isLoggedIn = false,
+  currentUser = null,
   onToggleAuth,
+  onLogout,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -152,14 +156,37 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {/* Desktop Auth Button */}
-            <button
-              id="nav-btn-auth"
-              onClick={() => (onToggleAuth ? onToggleAuth() : handleNav('auth'))}
-              className="hidden md:inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-              <span>{isLoggedIn ? 'Account' : 'Sign In'}</span>
-            </button>
+            {isLoggedIn ? (
+              <div className="hidden md:flex items-center gap-1">
+                <button
+                  id="nav-btn-account"
+                  onClick={() => handleNav('dashboard')}
+                  className="inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors max-w-[160px] truncate"
+                  title={currentUser?.email}
+                >
+                  <User className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
+                  <span className="truncate">{currentUser?.name || 'Account'}</span>
+                </button>
+                <button
+                  id="nav-btn-logout"
+                  onClick={onLogout}
+                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                id="nav-btn-auth"
+                onClick={() => (onToggleAuth ? onToggleAuth() : handleNav('auth'))}
+                className="hidden md:inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <span>Sign In</span>
+              </button>
+            )}
 
             {/* Primary CTA - Visible on ALL screen sizes (Mobile + Desktop) */}
             <button
@@ -269,16 +296,33 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-xs text-slate-400 font-normal">Monitoring</span>
             </button>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-[#1E293B]">
+            <div className="pt-2 border-t border-slate-100 dark:border-[#1E293B] space-y-2">
               <button
                 onClick={() => {
-                  if (onToggleAuth) onToggleAuth();
-                  else handleNav('auth');
+                  if (isLoggedIn) {
+                    handleNav('dashboard');
+                  } else if (onToggleAuth) {
+                    onToggleAuth();
+                  } else {
+                    handleNav('auth');
+                  }
                 }}
                 className="w-full py-2.5 px-3.5 rounded-xl text-sm font-bold text-center bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                {isLoggedIn ? 'Go to Account Settings' : 'Sign In / Register'}
+                {isLoggedIn ? 'Go to Dashboard' : 'Sign In / Register'}
               </button>
+              {isLoggedIn && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onLogout?.();
+                  }}
+                  className="w-full py-2.5 px-3.5 rounded-xl text-sm font-bold text-center bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

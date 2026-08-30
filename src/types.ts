@@ -149,6 +149,19 @@ export interface AdminTransaction {
   refundReason?: string;
 }
 
+export interface ScanHistoryItem {
+  id: string;
+  url: string;
+  overallScore: number;
+  grade: AuditResult['grade'];
+  status: AuditResult['status'];
+  criticalCount: number;
+  moderateCount: number;
+  minorCount: number;
+  passedCount: number;
+  createdAt: string;
+}
+
 export interface EmailTemplatePreview {
   id: string;
   target: 'user' | 'admin';

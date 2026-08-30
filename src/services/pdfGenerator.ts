@@ -1,5 +1,9 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// Named import (not default) is required for this to work both in the browser
+// (Vite bundles jspdf's ES build) and under plain Node (tsx resolves jspdf's
+// CJS build for server-side report generation) -- the two builds only agree
+// on the named `jsPDF` export, not on what a default import resolves to.
+import { jsPDF } from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
 import { AuditResult, AgencyBranding, PlanTier } from '../types';
 
 export function generateAuditPdf(

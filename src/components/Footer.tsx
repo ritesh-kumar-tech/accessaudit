@@ -5,9 +5,10 @@ import { PageView } from '../types';
 interface FooterProps {
   onNavigate: (view: PageView) => void;
   onScanClick: () => void;
+  isAdmin?: boolean;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin = false }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -128,23 +129,27 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick }) => {
                   Client Portal Sign In
                 </button>
               </li>
-              <li>
-                <button 
-                  onClick={() => onNavigate('admin')} 
-                  className="text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1"
-                >
-                  <span>Admin Console</span>
-                  <span className="text-[9px] px-1 rounded bg-amber-950 text-amber-300 border border-amber-800">STAFF</span>
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onNavigate('emails')} 
-                  className="text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  Transactional Email Previews
-                </button>
-              </li>
+              {isAdmin && (
+                <li>
+                  <button
+                    onClick={() => onNavigate('admin')}
+                    className="text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1"
+                  >
+                    <span>Admin Console</span>
+                    <span className="text-[9px] px-1 rounded bg-amber-950 text-amber-300 border border-amber-800">STAFF</span>
+                  </button>
+                </li>
+              )}
+              {isAdmin && (
+                <li>
+                  <button
+                    onClick={() => onNavigate('emails')}
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Transactional Email Previews
+                  </button>
+                </li>
+              )}
               <li className="text-slate-300">
                 Email: support@accessaudit.io
               </li>

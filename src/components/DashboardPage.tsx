@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Globe2, 
-  TrendingUp, 
-  TrendingDown, 
-  FileText, 
-  Download, 
-  Plus, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Bell, 
-  ShieldCheck, 
-  RefreshCw, 
+import React, { useState, useEffect } from 'react';
+import {
+  LayoutDashboard,
+  Globe2,
+  TrendingUp,
+  TrendingDown,
+  FileText,
+  Download,
+  Plus,
+  CheckCircle2,
+  AlertTriangle,
+  Bell,
+  ShieldCheck,
+  RefreshCw,
   ExternalLink,
   Settings,
   CreditCard,
@@ -25,14 +25,17 @@ import {
   Mail,
   HelpCircle,
   Clock,
-  ChevronRight
+  ChevronRight,
+  History,
 } from 'lucide-react';
-import { MonitoredSite, AuditResult, AgencyBranding, UserAccount, BillingInvoice, PlanTier } from '../types';
+import { MonitoredSite, AuditResult, AgencyBranding, UserAccount, BillingInvoice, PlanTier, ScanHistoryItem } from '../types';
 import { sampleMonitoredSites, sampleAudits, sampleBillingInvoices, samplePricingTiers } from '../data/mockAudits';
 import { generateAuditPdf } from '../services/pdfGenerator';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 interface DashboardPageProps {
   onRunScan: (url: string) => void;
+  onNavigateToScan?: () => void;
   onOpenPdfPreview: (audit: AuditResult) => void;
   agencyBranding: AgencyBranding;
   currentUser: UserAccount;
@@ -42,18 +45,60 @@ interface DashboardPageProps {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   onRunScan,
+  onNavigateToScan,
   onOpenPdfPreview,
   agencyBranding,
   currentUser,
   onUpdateUser,
   onNavigateToPricing,
 }) => {
-  const [activeTab, setActiveTab] = useState<'monitoring' | 'billing' | 'branding'>('monitoring');
+  const [activeTab, setActiveTab] = useState<'history' | 'monitoring' | 'billing'>('history');
   const [sites, setSites] = useState<MonitoredSite[]>(sampleMonitoredSites);
   const [selectedSiteId, setSelectedSiteId] = useState<string>(sampleMonitoredSites[0].id);
   const [showAddSiteModal, setShowAddSiteModal] = useState(false);
   const [newSiteUrl, setNewSiteUrl] = useState('');
   const [newSiteName, setNewSiteName] = useState('');
+
+  // Real, persisted scan history for the signed-in user (RLS-scoped to their own rows).
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
+  const [scanHistoryLoading, setScanHistoryLoading] = useState(true);
+  const [scanHistoryError, setScanHistoryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setScanHistoryLoading(false);
+      return;
+    }
+    let cancelled = false;
+
+    supabase
+      .from('scans')
+      .select('id, url, overall_score, grade, status, critical_count, moderate_count, minor_count, passed_count, created_at')
+      .order('created_at', { ascending: false })
+      .limit(25)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setScanHistoryError(error.message);
+        } else {
+          setScanHistory((data || []).map((row: any) => ({
+            id: row.id,
+            url: row.url,
+            overallScore: row.overall_score,
+            grade: row.grade,
+            status: row.status,
+            criticalCount: row.critical_count,
+            moderateCount: row.moderate_count,
+            minorCount: row.minor_count,
+            passedCount: row.passed_count,
+            createdAt: row.created_at,
+          })));
+        }
+        setScanHistoryLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
 
   // Billing Management State
   const [invoices, setInvoices] = useState<BillingInvoice[]>(sampleBillingInvoices);
@@ -190,6 +235,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           {/* Quick Sub-navigation */}
           <div className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800/80 p-1 rounded-2xl">
             <button
+              onClick={() => setActiveTab('history')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeTab === 'history'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Scan History</span>
+            </button>
+            <button
               onClick={() => setActiveTab('monitoring')}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'monitoring'
@@ -214,7 +270,108 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        {/* TAB 1: CONTINUOUS MONITORING */}
+        {/* TAB 0: REAL SCAN HISTORY (persisted per-account, server-enforced daily limits) */}
+        {activeTab === 'history' && (
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Your Scan History</h3>
+                <p className="text-xs text-slate-500">
+                  Every scan you run while signed in is saved here automatically.
+                </p>
+              </div>
+              <button
+                onClick={() => onNavigateToScan?.()}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-xs transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Scan New Website</span>
+              </button>
+            </div>
+
+            {!isSupabaseConfigured && (
+              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
+                Supabase isn't configured on this deployment, so scan history can't be loaded or saved yet.
+              </div>
+            )}
+
+            {isSupabaseConfigured && scanHistoryLoading && (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-14 rounded-xl bg-slate-100 dark:bg-slate-800/60 animate-pulse" />
+                ))}
+              </div>
+            )}
+
+            {isSupabaseConfigured && scanHistoryError && (
+              <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300">
+                Couldn't load scan history: {scanHistoryError}
+              </div>
+            )}
+
+            {isSupabaseConfigured && !scanHistoryLoading && !scanHistoryError && scanHistory.length === 0 && (
+              <div className="p-8 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No scans yet</p>
+                <p className="text-xs text-slate-500 mt-1 mb-4">Run your first accessibility scan to see it appear here.</p>
+                <button
+                  onClick={() => onNavigateToScan?.()}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Run Your First Scan</span>
+                </button>
+              </div>
+            )}
+
+            {isSupabaseConfigured && !scanHistoryLoading && !scanHistoryError && scanHistory.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#080D1A] text-slate-500 font-bold uppercase text-[10px]">
+                      <th className="py-3 px-4">Website</th>
+                      <th className="py-3 px-4">Score</th>
+                      <th className="py-3 px-4">Critical</th>
+                      <th className="py-3 px-4">Scanned</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {scanHistory.map((scan) => (
+                      <tr key={scan.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                        <td className="py-3.5 px-4">
+                          <p className="font-bold text-slate-900 dark:text-white font-mono text-[11px] truncate max-w-xs">{scan.url}</p>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-black text-sm text-slate-900 dark:text-white">{scan.overallScore}</span>
+                          <span className="text-[10px] text-slate-400">/100</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`font-bold ${scan.criticalCount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {scan.criticalCount}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500">
+                          {new Date(scan.createdAt).toLocaleString()}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => onRunScan(scan.url)}
+                            className="px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-xs flex items-center gap-1 ml-auto"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            <span>Re-scan</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 1: CONTINUOUS MONITORING (still a UI preview -- not wired to a real scheduler yet) */}
         {activeTab === 'monitoring' && (
           <div className="space-y-6">
             

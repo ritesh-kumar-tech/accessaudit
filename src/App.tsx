@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { PageView, AuditResult, AgencyBranding, UserAccount, PlanTier } from './types';
-import { sampleAudits, sampleUserAccounts } from './data/mockAudits';
+import { sampleAudits } from './data/mockAudits';
+import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { TrustBar } from './components/TrustBar';
@@ -22,6 +24,33 @@ import { EmailSystemViewer } from './components/EmailSystemViewer';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
 import { Footer } from './components/Footer';
 
+async function loadUserAccount(session: Session): Promise<UserAccount> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, role, plan, billing_cycle, created_at')
+    .eq('id', session.user.id)
+    .single();
+
+  return {
+    id: session.user.id,
+    name: profile?.full_name || session.user.email || 'Account',
+    email: session.user.email || '',
+    role: (profile?.role as 'user' | 'admin') || 'user',
+    plan: (profile?.plan as PlanTier) || 'free',
+    billingCycle: (profile?.billing_cycle as 'monthly' | 'annual') || 'monthly',
+    // Billing isn't wired up yet -- these fields are placeholders until Stripe is integrated.
+    status: 'Active',
+    currentPeriodEnd: 'N/A',
+    cancelAtPeriodEnd: false,
+    cardLast4: 'None',
+    cardBrand: 'N/A',
+    signupDate: profile?.created_at
+      ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+      : '',
+    totalScansCount: 0,
+  };
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<PageView>('landing');
   const [currentAudit, setCurrentAudit] = useState<AuditResult>(sampleAudits['example-ecommerce.com']);
@@ -30,10 +59,12 @@ export default function App() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [selectedAuditForPreview, setSelectedAuditForPreview] = useState<AuditResult | null>(null);
 
-  // Authenticated User State
-  const [currentUser, setCurrentUser] = useState<UserAccount>(sampleUserAccounts[0]); // Alex Rivera by default
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
-  const [initialAuthPlan, setInitialAuthPlan] = useState<PlanTier>('pro');
+  // Authenticated User State (backed by Supabase Auth + the `profiles` table)
+  const [session, setSession] = useState<Session | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured);
+  const [initialAuthPlan, setInitialAuthPlan] = useState<PlanTier>('free');
+  const isLoggedIn = Boolean(session);
 
   // Theme state: dark / light
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -59,16 +90,58 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Agency branding state
+  // Agency branding state (still local-only; agency workspace persistence lands in a later batch)
   const [agencyBranding, setAgencyBranding] = useState<AgencyBranding>({
     agencyName: 'Vanguard Digital Agency',
     logoUrl: '',
     primaryColor: '#2563EB',
+    accentColor: '#10B981',
     tagline: 'Accessibility & High-Performance Web Engineering',
     contactEmail: 'audits@vanguarddigital.io',
     website: 'https://vanguarddigital.io',
     enabled: true,
+    disclaimer: 'This audit report is generated using automated WCAG 2.2 testing and does not constitute legal advice or a guarantee of compliance.',
   });
+
+  // Bootstrap + subscribe to the real Supabase auth session.
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => subscription.subscription.unsubscribe();
+  }, []);
+
+  // Whenever the session changes, load (or clear) the corresponding profile.
+  useEffect(() => {
+    if (!session) {
+      setCurrentUser(null);
+      return;
+    }
+    loadUserAccount(session).then(setCurrentUser);
+  }, [session]);
+
+  // Protected routes: bounce unauthenticated visitors away from account-only views,
+  // and non-admins away from the admin console. Enforced here, not just by hiding links.
+  useEffect(() => {
+    if (authLoading) return;
+    if ((currentView === 'dashboard') && !isLoggedIn) {
+      setCurrentView('auth');
+    }
+    if (currentView === 'admin' && currentUser?.role !== 'admin') {
+      setCurrentView('landing');
+    }
+  }, [currentView, isLoggedIn, authLoading, currentUser]);
 
   const handleNavigate = (view: PageView) => {
     setCurrentView(view);
@@ -79,16 +152,14 @@ export default function App() {
     setIsScanning(true);
     setScanError(null);
     setScanProgressText('Launching headless browser and loading target page...');
-
-    // Switch to scan view
     setCurrentView('scan');
 
     const progressSteps = [
       'Scanning DOM nodes and responsive layout hierarchy...',
-      'Computing 4.5:1 text color contrast ratios (WCAG 1.4.3)...',
+      'Computing text color contrast ratios (WCAG 1.4.3)...',
       'Evaluating alternative text and ARIA landmark roles...',
       'Testing keyboard focus navigation and focus traps...',
-      'Synthesizing WCAG 2.2 Level AA / AAA compliance matrix...'
+      'Synthesizing WCAG 2.2 issue summary...',
     ];
 
     let stepIndex = 0;
@@ -100,10 +171,15 @@ export default function App() {
     }, 450);
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/scan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: targetUrl, htmlSnippet })
+        headers,
+        body: JSON.stringify({ url: targetUrl, htmlSnippet }),
       });
 
       const result = await response.json();
@@ -129,32 +205,39 @@ export default function App() {
     if (planName.toLowerCase().includes('free') || planName.toLowerCase().includes('eval')) tier = 'free';
 
     setInitialAuthPlan(tier);
-    if (tier === 'agency') {
-      handleNavigate('agency');
-    } else if (!isLoggedIn) {
+    if (!isLoggedIn) {
       handleNavigate('auth');
     } else {
-      setCurrentUser(prev => ({ ...prev, plan: tier }));
       handleNavigate('dashboard');
     }
   };
 
-  const handleAuthSuccess = (updatedFields: Partial<UserAccount>) => {
-    setCurrentUser(prev => ({
-      ...prev,
-      ...updatedFields
-    }));
-    setIsLoggedIn(true);
+  const handleAuthSuccess = (_updatedFields: Partial<UserAccount>) => {
+    // The real user record is derived from the Supabase session via loadUserAccount();
+    // this just moves the user into the app once sign-in/sign-up has completed.
     handleNavigate('dashboard');
   };
 
-  const handleUpdateCurrentUser = (partial: Partial<UserAccount>) => {
-    setCurrentUser(prev => ({ ...prev, ...partial }));
-  };
+  const handleLogout = useCallback(async () => {
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
+    setCurrentUser(null);
+    setSession(null);
+    handleNavigate('landing');
+  }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-[#E2E8F0] font-sans flex flex-col selection:bg-blue-500/20 selection:text-blue-600 transition-colors duration-200">
-      
+
       {/* Top Navbar */}
       <Navbar
         currentView={currentView}
@@ -163,12 +246,14 @@ export default function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         isLoggedIn={isLoggedIn}
+        currentUser={currentUser}
         onToggleAuth={() => handleNavigate('auth')}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area based on current view */}
       <main className="flex-1">
-        
+
         {/* LANDING PAGE VIEW */}
         {currentView === 'landing' && (
           <div className="animate-in fade-in duration-300">
@@ -181,12 +266,12 @@ export default function App() {
             />
             <TrustBar />
             <ProblemSection onScanClick={() => handleNavigate('scan')} />
-            <FeaturesSection 
+            <FeaturesSection
               onScanClick={() => handleNavigate('scan')}
               onAgencyClick={() => handleNavigate('agency')}
             />
             <HowItWorks onScanClick={() => handleNavigate('scan')} />
-            <PricingSection 
+            <PricingSection
               onSelectPlan={handleSelectPlan}
               onScanClick={() => handleNavigate('scan')}
             />
@@ -237,14 +322,15 @@ export default function App() {
         )}
 
         {/* DASHBOARD PAGE VIEW */}
-        {currentView === 'dashboard' && (
+        {currentView === 'dashboard' && currentUser && (
           <div className="animate-in fade-in duration-300">
             <DashboardPage
               onRunScan={handleRunScan}
+              onNavigateToScan={() => handleNavigate('scan')}
               onOpenPdfPreview={setSelectedAuditForPreview}
               agencyBranding={agencyBranding}
               currentUser={currentUser}
-              onUpdateUser={handleUpdateCurrentUser}
+              onUpdateUser={(partial) => setCurrentUser(prev => (prev ? { ...prev, ...partial } : prev))}
               onNavigateToPricing={() => handleNavigate('pricing')}
             />
           </div>
@@ -261,8 +347,8 @@ export default function App() {
           </div>
         )}
 
-        {/* ADMIN PANEL VIEW */}
-        {currentView === 'admin' && (
+        {/* ADMIN PANEL VIEW (guarded above: only rendered once currentUser.role === 'admin') */}
+        {currentView === 'admin' && currentUser?.role === 'admin' && (
           <div className="animate-in fade-in duration-300">
             <AdminPanel
               onNavigateToUserDashboard={() => handleNavigate('dashboard')}
@@ -283,9 +369,10 @@ export default function App() {
       </main>
 
       {/* Global Footer */}
-      <Footer 
+      <Footer
         onNavigate={handleNavigate}
         onScanClick={() => handleNavigate('scan')}
+        isAdmin={currentUser?.role === 'admin'}
       />
 
       {/* Multi-Page PDF Preview Inspector Modal */}
@@ -293,11 +380,10 @@ export default function App() {
         <PdfPreviewModal
           audit={selectedAuditForPreview}
           agencyBranding={agencyBranding}
-          userPlan={currentUser.plan}
+          userPlan={currentUser?.plan || 'free'}
           onClose={() => setSelectedAuditForPreview(null)}
-          onUpgrade={(tier) => {
-            setCurrentUser(prev => ({ ...prev, plan: tier }));
-            handleNavigate('dashboard');
+          onUpgrade={() => {
+            handleNavigate(isLoggedIn ? 'dashboard' : 'auth');
           }}
         />
       )}
