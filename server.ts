@@ -87,8 +87,17 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    // Vite's build output content-hashes every file under assets/ (the
+    // filename changes whenever the content does), so those are safe to
+    // cache forever; index.html itself must always be revalidated, since
+    // it's what points the browser at the current hashed filenames.
+    app.use('/assets', express.static(path.join(distPath, 'assets'), {
+      immutable: true,
+      maxAge: '1y',
+    }));
+    app.use(express.static(distPath, { index: false }));
     app.get('*', (req, res) => {
+      res.set('Cache-Control', 'no-cache');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

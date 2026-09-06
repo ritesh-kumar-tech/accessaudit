@@ -14,18 +14,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
   };
 
   return (
-    <footer className="bg-[#0B1120] text-slate-300 border-t border-slate-800 transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-        
+    <footer className="bg-[#0B1120] text-slate-400 border-t border-slate-800 transition-colors duration-200">
+      <div className="container-wide py-16 lg:py-24">
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-slate-800">
-          
+
           {/* Brand Col (2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
-            <div 
-              onClick={() => onNavigate('landing')} 
+            <div
+              onClick={() => onNavigate('landing')}
               className="flex items-center gap-2.5 cursor-pointer group select-none"
             >
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md group-hover:bg-blue-500 transition-colors">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <span className="font-extrabold text-xl text-white tracking-tight">
@@ -33,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
               </span>
             </div>
 
-            <p className="text-sm text-slate-300 leading-relaxed max-w-sm">
+            <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
               The automated web accessibility & WCAG 2.2 audit platform built for digital agencies, developers, and compliance officers.
             </p>
 
@@ -54,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
               <li>
                 <button 
                   onClick={onScanClick} 
-                  className="text-slate-300 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
                   Free URL Scanner
                 </button>
@@ -62,7 +62,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
               <li>
                 <button 
                   onClick={() => onNavigate('agency')} 
-                  className="text-slate-300 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
                   White-Label PDF Reports
                 </button>
@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
               <li>
                 <button 
                   onClick={() => onNavigate('dashboard')} 
-                  className="text-slate-300 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
                   Continuous Monitoring
                 </button>
@@ -78,13 +78,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
               <li>
                 <button 
                   onClick={() => onNavigate('pricing')} 
-                  className="text-slate-300 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
                   Agency Pricing Plans
                 </button>
               </li>
               <li>
-                <span className="text-slate-500 cursor-not-allowed">
+                <span className="text-slate-400 cursor-not-allowed">
                   CI/CD GitHub Action (Soon)
                 </span>
               </li>
@@ -96,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">
               Standards & Legal
             </h4>
-            <ul className="space-y-2.5 text-sm text-slate-300">
+            <ul className="space-y-2.5 text-sm text-slate-400">
               <li className="hover:text-white transition-colors">
                 European Accessibility Act (EAA)
               </li>
@@ -124,7 +124,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
               <li>
                 <button 
                   onClick={() => onNavigate('auth')} 
-                  className="text-slate-300 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
                   Client Portal Sign In
                 </button>
@@ -150,10 +150,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
                   </button>
                 </li>
               )}
-              <li className="text-slate-300">
+              <li className="text-slate-400">
                 Email: support@accessaudit.io
               </li>
-              <li className="text-slate-300">
+              <li className="text-slate-400">
                 London • New York • Berlin
               </li>
               <li className="text-emerald-400 font-semibold">
@@ -175,7 +175,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScanClick, isAdmin
           <div className="flex items-center gap-4">
             <button
               onClick={scrollToTop}
-              className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
             >
               <span>Back to Top</span>
               <ArrowUp className="w-3.5 h-3.5" />

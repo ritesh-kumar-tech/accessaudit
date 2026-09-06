@@ -2,6 +2,26 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Premium design-system tokens. Most of the brand palette already matches
+ * Tailwind's default scale exactly (blue-600 = #2563EB, emerald-500 =
+ * #10B981, slate-900 = #0F172A, slate-500 = #64748B, slate-50 = #F8FAFC,
+ * slate-200 = #E2E8F0) -- only the two values below have no default
+ * Tailwind equivalent and are added as real tokens (bg-brand-blue-bright,
+ * bg-surface-soft-blue, etc.). Shadow tokens give the whole site one
+ * 3-level elevation system instead of ad hoc shadow-md/shadow-xl per card.
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-brand-blue-bright: #0B63F6;
+  --color-surface-soft-blue: #F4F8FF;
+
+  --shadow-premium-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-premium-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-premium-lg: 0 20px 50px rgba(15, 23, 42, 0.12);
+}
+
 :root {
   color-scheme: light;
 }
@@ -19,13 +39,26 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /*
  * Reusable public-site container widths, so every section shares one
  * padding system instead of hard-coding max-w-* + px-* per component.
  * - narrow: long-form text (headlines, section intros)
  * - standard: default section width (card grids, most content)
- * - wide: visual/product sections that benefit from extra room
- *   (hero scanner + report preview, pricing, white-label, agency stats)
+ * - wide: the one width every landing-page section now uses (~1200px)
  */
 @layer components {
   .container-narrow,
@@ -42,23 +75,14 @@ body {
   }
 
   .container-standard {
-    max-width: 1280px;
+    max-width: 1200px;
   }
 
   .container-wide {
-    max-width: 1400px;
+    max-width: 1200px;
   }
 
   @media (min-width: 640px) {
-    .container-narrow,
-    .container-standard,
-    .container-wide {
-      padding-left: 1.25rem;
-      padding-right: 1.25rem;
-    }
-  }
-
-  @media (min-width: 768px) {
     .container-narrow,
     .container-standard,
     .container-wide {
@@ -76,50 +100,64 @@ body {
     }
   }
 
-  @media (min-width: 1280px) {
-    .container-narrow,
-    .container-standard,
-    .container-wide {
-      padding-left: 2.5rem;
-      padding-right: 2.5rem;
+  /*
+   * Section vertical rhythm, standardized across the landing page:
+   * desktop ~80px, tablet ~60px, mobile ~48px -- spacious but not padded
+   * out with dead air between sections.
+   */
+  .section-y {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  @media (min-width: 640px) {
+    .section-y {
+      padding-top: 3.75rem;
+      padding-bottom: 3.75rem;
     }
   }
 
-  @media (min-width: 1536px) {
-    .container-narrow,
-    .container-standard,
-    .container-wide {
-      padding-left: 3.5rem;
-      padding-right: 3.5rem;
+  @media (min-width: 1024px) {
+    .section-y {
+      padding-top: 5rem;
+      padding-bottom: 5rem;
     }
   }
 
   /*
-   * Hero background: a looping horizontal marquee of trusted-client logos,
-   * shown at low opacity behind the scan input. Duplicate the track content
-   * once so it can loop seamlessly at -50%.
+   * Standard section-header rhythm: eyebrow badge -> H2 -> supporting
+   * paragraph -> content. Same gap before the content grid everywhere.
    */
-  .marquee-track {
-    animation: marquee-scroll 40s linear infinite;
+  .section-header {
+    margin-bottom: 2.75rem;
   }
 
-  .marquee-track-reverse {
-    animation: marquee-scroll 46s linear infinite reverse;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .marquee-track,
-    .marquee-track-reverse {
-      animation-play-state: paused;
+  @media (min-width: 1024px) {
+    .section-header {
+      margin-bottom: 3.25rem;
     }
   }
-}
 
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(0);
+  /*
+   * One canonical animation for scroll-revealed section content. Applied
+   * via IntersectionObserver adding `.is-visible`; starts pre-animated
+   * (opacity:1) so content already in the viewport on load, JS-disabled
+   * browsers, and reduced-motion users all see it immediately.
+   */
+  .fade-up {
+    opacity: 1;
+    transform: none;
   }
-  to {
-    transform: translateX(-50%);
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-up {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 400ms ease-out, transform 400ms ease-out;
+    }
+    .fade-up.is-visible {
+      opacity: 1;
+      transform: none;
+    }
   }
 }

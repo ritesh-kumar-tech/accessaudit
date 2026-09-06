@@ -10,6 +10,7 @@ import {
   Star
 } from 'lucide-react';
 import { PricingTier, PlanTier } from '../types';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 interface PricingSectionProps {
   onSelectPlan: (tier: PlanTier, billingCycle: 'monthly' | 'annual') => void;
@@ -18,6 +19,7 @@ interface PricingSectionProps {
 
 export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, onScanClick }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const { ref, isVisible } = useScrollReveal<HTMLElement>();
 
   const plans: PricingTier[] = [
     {
@@ -96,16 +98,16 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
   ];
 
   return (
-    <section id="pricing" className="py-20 lg:py-28 bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-[#1E293B] transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section id="pricing" ref={ref} className={`section-y bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-[#1E293B] transition-colors duration-200 fade-up ${isVisible ? 'is-visible' : ''}`}>
+      <div className="container-wide">
+
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto section-header">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-xs font-bold text-blue-700 dark:text-blue-300 mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             Simple, Transparent Pricing
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-[#E2E8F0] tracking-tight">
+          <h2 className="text-[30px] sm:text-4xl lg:text-[42px] font-extrabold text-slate-900 dark:text-[#E2E8F0] tracking-tight">
             Plans That Pay for Themselves on Your First Client Audit
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -121,11 +123,13 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
               type="button"
               id="billing-cycle-toggle-btn"
               onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
-              className="relative inline-flex h-7 w-14 items-center rounded-full bg-slate-200 dark:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="relative inline-flex h-7 w-14 items-center rounded-full bg-slate-200 dark:bg-slate-700 shadow-inner transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              role="switch"
+              aria-checked={billingCycle === 'annual'}
               aria-label="Toggle annual billing"
             >
               <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-premium-sm transition-transform ${
                   billingCycle === 'annual' ? 'translate-x-8 bg-blue-600' : 'translate-x-1'
                 }`}
               />
@@ -142,7 +146,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
         </div>
 
         {/* 4 Equal-Height Pricing Cards Grid (1 col on mobile, 2 col on md, 4 col on lg) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-stretch mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-stretch mb-10">
           {plans.map((plan) => {
             const price = billingCycle === 'annual' ? plan.priceAnnual : plan.priceMonthly;
             const isAgency = plan.popular;
@@ -150,22 +154,31 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all h-full ${
+                className={`relative overflow-hidden rounded-[20px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 h-full ${
                   isAgency
-                    ? 'bg-slate-900 dark:bg-[#0B1120] text-white shadow-2xl ring-2 ring-blue-500/50 scale-100 lg:-translate-y-2'
-                    : 'bg-slate-50/80 dark:bg-[#0B1120]/70 text-slate-900 dark:text-[#E2E8F0] border border-slate-200 dark:border-[#1E293B] hover:shadow-lg'
+                    ? 'bg-[#0F172A] text-white shadow-premium-lg ring-1 ring-blue-500/40 lg:-translate-y-2'
+                    : 'bg-slate-50/80 dark:bg-[#0B1120]/70 text-slate-900 dark:text-[#E2E8F0] border border-slate-200 dark:border-[#1E293B] shadow-premium-sm hover:shadow-premium-md hover:-translate-y-0.5'
                 }`}
               >
+                {/* Subtle blue/teal glow behind the recommended card only */}
+                {isAgency && (
+                  <div
+                    className="absolute -top-1/3 left-1/2 -translate-x-1/2 w-[140%] h-[80%] pointer-events-none opacity-70"
+                    style={{ background: 'radial-gradient(closest-side, rgba(16,185,129,0.18), rgba(37,99,235,0.12) 55%, rgba(37,99,235,0) 75%)' }}
+                    aria-hidden="true"
+                  ></div>
+                )}
+
                 {/* Popular Tag for Agency White-Label */}
                 {isAgency && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-500 to-emerald-500 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
-                      <Star className="w-3 h-3 fill-current" /> Recommended for Agencies
+                  <div className="absolute z-10 -top-3.5 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-premium-sm">
+                      <Star className="w-3 h-3 fill-current" /> Most Popular
                     </span>
                   </div>
                 )}
 
-                <div>
+                <div className="relative z-10">
                   {/* Plan Name & Tag */}
                   <div className="flex items-center justify-between mb-2">
                     <h3 className={`text-xl font-black ${isAgency ? 'text-white' : 'text-slate-900 dark:text-[#E2E8F0]'}`}>
@@ -213,7 +226,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
                 </div>
 
                 {/* Card CTA button */}
-                <div className="pt-4 border-t border-slate-200/50 dark:border-[#1E293B]">
+                <div className="relative z-10 pt-4 border-t border-slate-200/50 dark:border-[#1E293B]">
                   <button
                     type="button"
                     onClick={() => {
@@ -223,10 +236,10 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
                         onSelectPlan(plan.tier, billingCycle);
                       }
                     }}
-                    className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all active:scale-98 min-h-[44px] ${
+                    className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                       isAgency
-                        ? 'bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 text-white shadow-lg shadow-blue-500/25'
-                        : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-[#1E293B]'
+                        ? 'bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white shadow-premium-md hover:shadow-premium-lg hover:-translate-y-0.5 focus-visible:ring-offset-[#0F172A]'
+                        : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-[#1E293B] hover:-translate-y-0.5'
                     }`}
                   >
                     <span>{plan.ctaText}</span>
@@ -240,14 +253,14 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
         </div>
 
         {/* Guarantee Banner */}
-        <div className="bg-slate-50 dark:bg-[#0B1120] rounded-2xl p-6 border border-slate-200 dark:border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="bg-slate-50 dark:bg-[#0B1120] rounded-[20px] p-6 border border-slate-200 dark:border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <h4 className="text-sm font-bold text-slate-900 dark:text-[#E2E8F0]">14-Day Money-Back Guarantee</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Try Agency White-Label risk-free. If it doesn't help you land a client retainer, get a 100% refund.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Try Agency White-Label risk-free. If it doesn't help you land a client retainer, get a 100% refund.</p>
             </div>
           </div>
           <button

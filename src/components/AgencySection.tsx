@@ -17,6 +17,7 @@ import {
 import { AgencyBranding, AuditResult, PlanTier } from '../types';
 import { generateAuditPdf } from '../services/pdfGenerator';
 import { sampleAudits } from '../data/mockAudits';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 interface AgencySectionProps {
   agencyBranding: AgencyBranding;
@@ -31,8 +32,9 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
   onOpenPdfPreview,
   onSelectPlan,
 }) => {
+  const { ref, isVisible } = useScrollReveal<HTMLElement>();
   const [activePreviewTab, setActivePreviewTab] = useState<'branded' | 'generic'>('branded');
-  
+
   // Interactive Retainer Revenue ROI Calculator State
   const [clientCount, setClientCount] = useState<number>(8);
   const [auditFee, setAuditFee] = useState<number>(950);
@@ -58,16 +60,20 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
   };
 
   return (
-    <section className="py-20 lg:py-28 bg-slate-50 dark:bg-[#0B1120] transition-colors duration-200" id="agency">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section
+      ref={ref}
+      id="agency"
+      className={`section-y bg-gradient-to-b from-slate-50 to-surface-soft-blue dark:from-[#0B1120] dark:to-[#0B1120] transition-colors duration-200 fade-up ${isVisible ? 'is-visible' : ''}`}
+    >
+      <div className="container-wide">
+
         {/* Section Top Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto section-header">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-4">
             <Building2 className="w-4 h-4" />
             Built for Web Agencies & Freelancers
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-[#E2E8F0] tracking-tight">
+          <h2 className="text-[30px] sm:text-4xl lg:text-[46px] font-extrabold text-slate-900 dark:text-[#E2E8F0] tracking-tight">
             Stop Sending Ugly Screenshots. Deliver Agency-Grade White-Label Audits.
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -76,10 +82,10 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
         </div>
 
         {/* Interactive Customizer & White-Label Comparison */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-20 items-start">
-          
-          {/* Left Column: Live Agency Branding Editor */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-14 items-start">
+
+          {/* Left Column: Live Agency Branding Editor -- kept visually secondary to the mockup */}
+          <div className="lg:col-span-4 bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-premium-sm">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#1E293B] mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
@@ -132,12 +138,14 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
                     <input
                       type="color"
                       id="agency-color-picker"
+                      aria-label="Brand color picker"
                       value={agencyBranding.primaryColor}
                       onChange={(e) => onUpdateBranding({ primaryColor: e.target.value })}
                       className="w-10 h-10 rounded-lg cursor-pointer border border-slate-300 dark:border-[#1E293B] p-0.5 bg-white dark:bg-[#0B1120]"
                     />
                     <input
                       type="text"
+                      aria-label="Brand color hex value"
                       value={agencyBranding.primaryColor}
                       onChange={(e) => onUpdateBranding({ primaryColor: e.target.value })}
                       className="w-full min-h-[44px] p-2.5 bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#1E293B] rounded-xl font-mono text-xs text-slate-800 dark:text-slate-200"
@@ -165,7 +173,7 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Preset Color Themes
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {[
                     { name: 'Trust Blue', hex: '#2563EB' },
                     { name: 'Emerald', hex: '#059669' },
@@ -192,7 +200,7 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
                   type="button"
                   id="agency-preview-modal-btn"
                   onClick={() => onOpenPdfPreview(mockAudit)}
-                  className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors min-h-[44px]"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-premium-sm hover:shadow-premium-md hover:-translate-y-0.5 transition-all duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 >
                   <Eye className="w-4 h-4" />
                   <span>Open Full PDF Viewer</span>
@@ -212,9 +220,14 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
             </div>
           </div>
 
-          {/* Right Column: High-Contrast White-Label Comparison Mockup */}
-          <div className="lg:col-span-7">
-            <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-xl">
+          {/* Right Column: High-Contrast White-Label Comparison Mockup -- the section's main visual focus */}
+          <div className="lg:col-span-8 relative overflow-hidden">
+            <div
+              className="absolute -inset-6 pointer-events-none opacity-70 dark:opacity-40"
+              style={{ background: 'radial-gradient(closest-side, rgba(37,99,235,0.10), rgba(16,185,129,0.06) 60%, rgba(37,99,235,0) 80%)' }}
+              aria-hidden="true"
+            ></div>
+            <div className="relative bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-premium-lg">
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-[#1E293B] mb-6">
                 <div>
@@ -372,14 +385,19 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
         </div>
 
         {/* Agency Retainer Revenue ROI Calculator (Dark Card Section, Mobile Friendly with min 44px touch targets) */}
-        <div className="bg-slate-900 dark:bg-[#111827] rounded-3xl p-6 sm:p-10 lg:p-12 text-white border border-slate-800 dark:border-[#1E293B] shadow-2xl">
-          
-          <div className="max-w-3xl mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold mb-3">
+        <div className="relative overflow-hidden bg-[#0F172A] dark:bg-[#111827] rounded-3xl p-6 sm:p-10 lg:p-12 text-white border border-slate-800/80 dark:border-[#1E293B] shadow-premium-lg">
+          <div
+            className="absolute -top-1/3 -right-1/4 w-[70%] h-[140%] pointer-events-none opacity-60"
+            style={{ background: 'radial-gradient(closest-side, rgba(37,99,235,0.20), rgba(37,99,235,0) 70%)' }}
+            aria-hidden="true"
+          ></div>
+
+          <div className="relative max-w-3xl mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold mb-3">
               <TrendingUp className="w-3.5 h-3.5" />
               Agency ROI & Retainer Profit Calculator
             </div>
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
               How Much Revenue Can Your Agency Generate with AccessAudit?
             </h3>
             <p className="text-sm text-slate-300 mt-2 leading-relaxed">
@@ -388,16 +406,16 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
           </div>
 
           {/* 1 Column on Mobile, 12 Column on Large */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            
+          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+
             {/* Sliders (6 cols on lg) */}
             <div className="lg:col-span-6 space-y-6">
-              
+
               {/* Slider 1: Active Clients */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-bold text-slate-300">Active Retainer Clients:</span>
-                  <span className="font-mono text-base font-extrabold text-emerald-400">{clientCount} Websites</span>
+                  <span className="font-mono text-base font-extrabold text-blue-400">{clientCount} Websites</span>
                 </div>
                 <input
                   type="range"
@@ -405,7 +423,7 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
                   max={30}
                   value={clientCount}
                   onChange={(e) => setClientCount(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 min-h-[44px]"
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 min-h-[44px]"
                   aria-label="Active retainer clients slider"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 font-mono">
@@ -464,13 +482,13 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
             </div>
 
             {/* Results Box (6 cols on lg) */}
-            <div className="lg:col-span-6 bg-slate-800/80 rounded-2xl p-6 sm:p-8 border border-slate-700 flex flex-col justify-between">
+            <div className="lg:col-span-6 bg-slate-800/60 rounded-2xl p-6 sm:p-8 border border-slate-700/60 shadow-premium-md flex flex-col justify-between">
               <div>
                 <span className="text-xs uppercase font-bold text-emerald-400 tracking-wider block mb-1">
                   Estimated Agency Net Annual Profit
                 </span>
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                  <span className="text-5xl sm:text-6xl font-extrabold bg-gradient-to-r from-emerald-400 via-sky-400 to-blue-400 bg-clip-text text-transparent tracking-tight">
                     ${netAgencyProfit.toLocaleString()}
                   </span>
                   <span className="text-xs text-slate-400 font-medium">/ year</span>
@@ -497,7 +515,7 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
                   type="button"
                   id="calc-upgrade-agency-btn"
                   onClick={() => onSelectPlan('agency', 'monthly')}
-                  className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all active:scale-98 min-h-[48px]"
+                  className="w-full py-4 px-6 rounded-xl bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-premium-md hover:shadow-premium-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
                 >
                   <span>Start Agency White-Label Trial ($79/mo)</span>
                   <ArrowRight className="w-4 h-4" />

@@ -1,26 +1,29 @@
 import React from 'react';
-import { 
-  Scale, 
-  Euro, 
-  FileWarning, 
-  ShieldAlert, 
-  ArrowRight, 
-  CheckCircle2, 
-  Clock, 
-  TrendingDown 
+import {
+  Scale,
+  Euro,
+  FileWarning,
+  ShieldAlert,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  TrendingDown
 } from 'lucide-react';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 interface ProblemSectionProps {
   onScanClick: () => void;
 }
 
 export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) => {
+  const { ref, isVisible } = useScrollReveal<HTMLElement>();
+
   return (
-    <section className="py-20 lg:py-28 bg-slate-50 dark:bg-[#0B1120] transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section ref={ref} className={`section-y bg-slate-50 dark:bg-[#0B1120] transition-colors duration-200 fade-up ${isVisible ? 'is-visible' : ''}`}>
+      <div className="container-wide">
+
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto section-header">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 text-xs font-bold text-red-700 dark:text-red-300 mb-4">
             <ShieldAlert className="w-3.5 h-3.5" />
             Compliance Reality Check
@@ -34,10 +37,10 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
         </div>
 
         {/* 3 Problem Cards - 1 col on mobile, 3 col on md+ */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-8 lg:mb-10">
           
           {/* Card 1: EAA Deadline */}
-          <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-md hover:shadow-lg transition-shadow flex flex-col justify-between">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-premium-sm hover:shadow-premium-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between h-full">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-6">
                 <Euro className="w-6 h-6" />
@@ -48,7 +51,7 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
               <h3 className="text-xl font-bold text-slate-900 dark:text-[#E2E8F0] mt-3">
                 European Accessibility Act (EAA) Mandatory Enforcement
               </h3>
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="mt-3 text-[15px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 By June 28, 2025, any business selling products or digital services to EU consumers must comply with EN 301 549 (WCAG 2.1 AA). Non-compliance triggers state fines up to €100,000+ per member state.
               </p>
             </div>
@@ -59,7 +62,7 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
           </div>
 
           {/* Card 2: ADA Lawsuits */}
-          <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-md hover:shadow-lg transition-shadow flex flex-col justify-between">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-premium-sm hover:shadow-premium-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between h-full">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 flex items-center justify-center text-red-600 dark:text-red-400 mb-6">
                 <Scale className="w-6 h-6" />
@@ -70,7 +73,7 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
               <h3 className="text-xl font-bold text-slate-900 dark:text-[#E2E8F0] mt-3">
                 4,000+ Federal Accessibility Lawsuits Filed Annually
               </h3>
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="mt-3 text-[15px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 Plaintiffs' law firms use automated scrapers to target e-commerce and SaaS websites with missing form labels, color contrast failures, and broken keyboard navigation. Average settlement: $25,000 – $50,000.
               </p>
             </div>
@@ -81,7 +84,7 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
           </div>
 
           {/* Card 3: Agency Retainer Opportunity */}
-          <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-md hover:shadow-lg transition-shadow flex flex-col justify-between">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-[#1E293B] shadow-premium-sm hover:shadow-premium-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between h-full">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6">
                 <CheckCircle2 className="w-6 h-6" />
@@ -92,7 +95,7 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
               <h3 className="text-xl font-bold text-slate-900 dark:text-[#E2E8F0] mt-3">
                 Turn Compliance Audits into High-Margin Retainers
               </h3>
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="mt-3 text-[15px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 Clients are actively asking for accessibility assurances. Deliver white-labeled 5-page PDF reports with your logo, upsell $1,500 remediation sprints, and bill $299/mo for automated monthly monitoring.
               </p>
             </div>
@@ -105,16 +108,21 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ onScanClick }) =
         </div>
 
         {/* Call to action banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950 rounded-3xl p-8 sm:p-10 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl border border-slate-800 dark:border-[#1E293B]">
-          <div className="space-y-2 text-center md:text-left">
-            <h3 className="text-2xl font-bold tracking-tight">Are your client websites exposed to risk?</h3>
+        <div className="relative overflow-hidden bg-[#0F172A] dark:bg-[#111827] rounded-3xl p-8 sm:p-10 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-premium-lg border border-slate-800 dark:border-[#1E293B]">
+          <div
+            className="absolute -top-1/2 right-0 w-[60%] h-[200%] pointer-events-none opacity-60"
+            style={{ background: 'radial-gradient(closest-side, rgba(37,99,235,0.25), rgba(37,99,235,0) 70%)' }}
+            aria-hidden="true"
+          ></div>
+          <div className="relative space-y-2 text-center md:text-left">
+            <h3 className="text-2xl font-bold tracking-tight text-white">Are your client websites exposed to risk?</h3>
             <p className="text-sm text-slate-300 max-w-xl">
               Run an instant non-destructive WCAG 2.2 audit now. Get a complete score and violation checklist in 60 seconds.
             </p>
           </div>
           <button
             onClick={onScanClick}
-            className="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 transition-all shrink-0 active:scale-98 min-h-[44px]"
+            className="relative px-6 py-3 bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white font-bold rounded-xl text-sm flex items-center gap-2 shadow-premium-md hover:shadow-premium-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F172A]"
           >
             <span>Scan Domain Now</span>
             <ArrowRight className="w-4 h-4" />
