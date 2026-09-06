@@ -18,3 +18,108 @@ html {
 body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
+
+/*
+ * Reusable public-site container widths, so every section shares one
+ * padding system instead of hard-coding max-w-* + px-* per component.
+ * - narrow: long-form text (headlines, section intros)
+ * - standard: default section width (card grids, most content)
+ * - wide: visual/product sections that benefit from extra room
+ *   (hero scanner + report preview, pricing, white-label, agency stats)
+ */
+@layer components {
+  .container-narrow,
+  .container-standard,
+  .container-wide {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .container-narrow {
+    max-width: 1000px;
+  }
+
+  .container-standard {
+    max-width: 1280px;
+  }
+
+  .container-wide {
+    max-width: 1400px;
+  }
+
+  @media (min-width: 640px) {
+    .container-narrow,
+    .container-standard,
+    .container-wide {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container-narrow,
+    .container-standard,
+    .container-wide {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-narrow,
+    .container-standard,
+    .container-wide {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .container-narrow,
+    .container-standard,
+    .container-wide {
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .container-narrow,
+    .container-standard,
+    .container-wide {
+      padding-left: 3.5rem;
+      padding-right: 3.5rem;
+    }
+  }
+
+  /*
+   * Hero background: a looping horizontal marquee of trusted-client logos,
+   * shown at low opacity behind the scan input. Duplicate the track content
+   * once so it can loop seamlessly at -50%.
+   */
+  .marquee-track {
+    animation: marquee-scroll 40s linear infinite;
+  }
+
+  .marquee-track-reverse {
+    animation: marquee-scroll 46s linear infinite reverse;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track,
+    .marquee-track-reverse {
+      animation-play-state: paused;
+    }
+  }
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

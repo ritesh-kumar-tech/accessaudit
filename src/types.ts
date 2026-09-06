@@ -15,6 +15,8 @@ export interface AuditIssue {
   title: string;
   description: string;
   plainSummary?: string; // Non-technical plain language explanation
+  riskStatement?: string; // Why this matters, framed as real-world/legal risk
+  freeHint?: string; // Directional nudge at the fix, shown to free-tier users (full fix is gated)
   wcagRule: string;
   wcagLevel: 'A' | 'AA' | 'AAA';
   affectedElement: string;

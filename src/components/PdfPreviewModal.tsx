@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   X, 
   Download, 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { AuditResult, AgencyBranding, PlanTier } from '../types';
 import { generateAuditPdf } from '../services/pdfGenerator';
+import { LockedSection } from './LockedSection';
 
 interface PdfPreviewModalProps {
   audit: AuditResult;
@@ -35,6 +36,14 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
   const [activeTier, setActiveTier] = useState<PlanTier>(userPlan);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [useAgencyBranding, setUseAgencyBranding] = useState<boolean>(activeTier === 'agency');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const totalPages = activeTier === 'free' ? 2 : (activeTier === 'pro' ? 4 : 5);
   const brandName = (activeTier === 'agency' && useAgencyBranding) ? agencyBranding.agencyName : 'AccessAudit';
@@ -56,8 +65,16 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#0B1120] rounded-3xl w-full max-w-5xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tiered PDF report inspector"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-[#0B1120] rounded-3xl w-full max-w-5xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Modal Top Bar */}
         <div className="p-4 sm:p-5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -119,6 +136,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
 
             <button
               onClick={onClose}
+              aria-label="Close report preview"
               className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors ml-1"
             >
               <X className="w-5 h-5" />
@@ -197,6 +215,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
+              aria-label="Previous page"
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -207,6 +226,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
+              aria-label="Next page"
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />
@@ -366,39 +386,11 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                 </div>
 
                 {activeTier === 'free' ? (
-                  /* Locked state overlay */
-                  <div className="relative rounded-2xl border border-slate-200 p-6 bg-slate-50/80 overflow-hidden text-center space-y-4">
-                    {/* Blurred fake content */}
-                    <div className="filter blur-xs opacity-40 space-y-3 select-none pointer-events-none">
-                      <div className="h-6 bg-slate-300 rounded-md w-3/4"></div>
-                      <div className="h-12 bg-slate-200 rounded-md"></div>
-                      <div className="h-6 bg-slate-300 rounded-md w-1/2"></div>
-                      <div className="h-12 bg-slate-200 rounded-md"></div>
-                    </div>
-
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-3 shadow-md">
-                        <Lock className="w-6 h-6" />
-                      </div>
-                      <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
-                        Developer Code Patches Locked in Free Plan
-                      </h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md mt-1">
-                        Unlock exact CSS selectors, faulty vs. corrected HTML snippets, and automated monitoring.
-                      </p>
-                      {onUpgrade && (
-                        <button
-                          onClick={() => {
-                            onClose();
-                            onUpgrade('pro');
-                          }}
-                          className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md"
-                        >
-                          Upgrade to Pro Plan ($49/mo)
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <LockedSection
+                    title="Developer Code Patches Locked in Free Plan"
+                    description="Unlock exact CSS selectors, faulty vs. corrected HTML snippets, and automated monitoring."
+                    onUpgrade={onUpgrade ? () => { onClose(); onUpgrade('pro'); } : undefined}
+                  />
                 ) : (
                   /* Unlocked Issue list */
                   <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">

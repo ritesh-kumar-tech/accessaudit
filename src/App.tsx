@@ -23,6 +23,12 @@ import { AdminPanel } from './components/AdminPanel';
 import { EmailSystemViewer } from './components/EmailSystemViewer';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
 import { Footer } from './components/Footer';
+import { generateAuditPdf } from './services/pdfGenerator';
+
+type PendingIntent =
+  | { type: 'download'; kind: 'standard' | 'white-label'; audit: AuditResult }
+  | { type: 'checkout'; tier: PlanTier; billingCycle: 'monthly' | 'annual' }
+  | null;
 
 async function loadUserAccount(session: Session): Promise<UserAccount> {
   const { data: profile } = await supabase
@@ -38,7 +44,7 @@ async function loadUserAccount(session: Session): Promise<UserAccount> {
     role: (profile?.role as 'user' | 'admin') || 'user',
     plan: (profile?.plan as PlanTier) || 'free',
     billingCycle: (profile?.billing_cycle as 'monthly' | 'annual') || 'monthly',
-    // Billing isn't wired up yet -- these fields are placeholders until Stripe is integrated.
+    // Billing isn't wired up yet -- these fields are placeholders until Razorpay is integrated.
     status: 'Active',
     currentPeriodEnd: 'N/A',
     cancelAtPeriodEnd: false,
@@ -64,6 +70,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured);
   const [initialAuthPlan, setInitialAuthPlan] = useState<PlanTier>('free');
+  const [pendingIntent, setPendingIntent] = useState<PendingIntent>(null);
   const isLoggedIn = Boolean(session);
 
   // Theme state: dark / light
@@ -199,24 +206,82 @@ export default function App() {
     }
   };
 
-  const handleSelectPlan = (planName: string) => {
-    let tier: PlanTier = 'pro';
-    if (planName.toLowerCase().includes('agency')) tier = 'agency';
-    if (planName.toLowerCase().includes('free') || planName.toLowerCase().includes('eval')) tier = 'free';
+  const startCheckout = async (tier: PlanTier, billingCycle: 'monthly' | 'annual') => {
+    if (tier === 'free' || !session?.access_token) return;
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ tier, billingCycle }),
+      });
+      const result = await response.json();
+      if (response.ok && result?.url) {
+        window.location.href = result.url;
+      } else {
+        console.error('Could not start checkout:', result?.error);
+      }
+    } catch (err) {
+      console.error('Checkout request failed', err);
+    }
+  };
 
+  const handleSelectPlan = (tier: PlanTier, billingCycle: 'monthly' | 'annual') => {
     setInitialAuthPlan(tier);
+    if (tier === 'free') {
+      handleNavigate('scan');
+      return;
+    }
     if (!isLoggedIn) {
+      setPendingIntent({ type: 'checkout', tier, billingCycle });
       handleNavigate('auth');
-    } else {
+      return;
+    }
+    startCheckout(tier, billingCycle);
+  };
+
+  const handleAuthSuccess = (_updatedFields: Partial<UserAccount>) => {
+    // The real session/profile are derived asynchronously from Supabase's
+    // onAuthStateChange listener (see effects above) and aren't guaranteed to
+    // have landed yet when this fires -- pending-intent resumption happens in
+    // the effect below once session/currentUser actually catch up, not here.
+    if (!pendingIntent) {
       handleNavigate('dashboard');
     }
   };
 
-  const handleAuthSuccess = (_updatedFields: Partial<UserAccount>) => {
-    // The real user record is derived from the Supabase session via loadUserAccount();
-    // this just moves the user into the app once sign-in/sign-up has completed.
-    handleNavigate('dashboard');
-  };
+  // Resumes whatever the visitor was trying to do before being sent to sign in
+  // (download a report, start a checkout) once the auth state it depends on
+  // has actually settled -- avoids acting on stale session/plan data.
+  useEffect(() => {
+    if (!pendingIntent || !session) return;
+
+    if (pendingIntent.type === 'checkout') {
+      const { tier, billingCycle } = pendingIntent;
+      setPendingIntent(null);
+      startCheckout(tier, billingCycle);
+      return;
+    }
+
+    if (pendingIntent.type === 'download') {
+      if (!currentUser) return; // wait for the profile fetch so the PDF respects the real plan
+      const { kind, audit } = pendingIntent;
+      const tier = currentUser.plan;
+      setPendingIntent(null);
+      const doc = kind === 'standard'
+        ? generateAuditPdf(audit, undefined, tier)
+        : generateAuditPdf(audit, agencyBranding, tier);
+      doc.save(
+        kind === 'standard'
+          ? `accessibility-audit-${audit.url.replace(/https?:\/\//i, '').replace(/[^a-zA-Z0-9]/g, '-')}.pdf`
+          : `${agencyBranding.agencyName.toLowerCase().replace(/\s+/g, '-')}-audit-report.pdf`
+      );
+      handleNavigate('dashboard');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, currentUser, pendingIntent]);
 
   const handleLogout = useCallback(async () => {
     if (isSupabaseConfigured) {
@@ -259,10 +324,8 @@ export default function App() {
           <div className="animate-in fade-in duration-300">
             <HeroSection
               onRunScan={handleRunScan}
-              onOpenPdfPreview={setSelectedAuditForPreview}
-              sampleAudit={currentAudit}
+              onExploreSample={() => handleNavigate('scan')}
               isScanning={isScanning}
-              agencyBranding={agencyBranding}
             />
             <TrustBar />
             <ProblemSection onScanClick={() => handleNavigate('scan')} />
@@ -295,6 +358,12 @@ export default function App() {
               onRunScan={handleRunScan}
               onOpenPdfPreview={setSelectedAuditForPreview}
               agencyBranding={agencyBranding}
+              userPlan={currentUser?.plan ?? 'free'}
+              isLoggedIn={isLoggedIn}
+              onRequireAuth={(kind) => {
+                setPendingIntent({ type: 'download', kind, audit: currentAudit });
+                handleNavigate('auth');
+              }}
             />
           </div>
         )}

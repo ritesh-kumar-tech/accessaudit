@@ -29,10 +29,12 @@ import {
   Share2,
   FileCode,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
+  Lock
 } from 'lucide-react';
-import { AuditResult, Category, Severity, AgencyBranding } from '../types';
+import { AuditResult, Category, Severity, AgencyBranding, PlanTier } from '../types';
 import { generateAuditPdf } from '../services/pdfGenerator';
+import { LockedSection } from './LockedSection';
 import confetti from 'canvas-confetti';
 
 interface ScanPageProps {
@@ -43,6 +45,9 @@ interface ScanPageProps {
   onRunScan: (url: string, htmlSnippet?: string) => void;
   onOpenPdfPreview: (audit: AuditResult) => void;
   agencyBranding: AgencyBranding;
+  userPlan: PlanTier;
+  isLoggedIn: boolean;
+  onRequireAuth: (kind: 'standard' | 'white-label') => void;
 }
 
 // Vision simulation types
@@ -56,8 +61,11 @@ export const ScanPage: React.FC<ScanPageProps> = ({
   onRunScan,
   onOpenPdfPreview,
   agencyBranding,
+  userPlan,
+  isLoggedIn,
+  onRequireAuth,
 }) => {
-  const [urlInput, setUrlInput] = useState(currentAudit.url || 'https://www.luxe-apparel.store');
+  const [urlInput, setUrlInput] = useState('');
   const [activeTab, setActiveTab] = useState<'url' | 'code'>('url');
   const [codeSnippet, setCodeSnippet] = useState(
 `<button class="bg-slate-200 text-slate-400">Submit Form</button>
@@ -154,7 +162,14 @@ export const ScanPage: React.FC<ScanPageProps> = ({
   };
 
   const handleDownloadJsonReport = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentAudit, null, 2));
+    if (!isLoggedIn) return onRequireAuth('standard');
+    const exportAudit = userPlan === 'free'
+      ? {
+          ...currentAudit,
+          issues: currentAudit.issues.map(({ howToFix, codeSnippetFaulty, codeSnippetFix, affectedElement, ...rest }) => rest),
+        }
+      : currentAudit;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportAudit, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", `wcag-audit-${currentAudit.url.replace(/https?:\/\//i, '').replace(/[^a-zA-Z0-9]/g, '-')}.json`);
@@ -168,12 +183,14 @@ export const ScanPage: React.FC<ScanPageProps> = ({
   };
 
   const handleDownloadStandardPdf = () => {
-    const doc = generateAuditPdf(currentAudit);
+    if (!isLoggedIn) return onRequireAuth('standard');
+    const doc = generateAuditPdf(currentAudit, undefined, userPlan);
     doc.save(`accessibility-audit-${currentAudit.url.replace(/https?:\/\//i, '').replace(/[^a-zA-Z0-9]/g, '-')}.pdf`);
   };
 
   const handleDownloadWhiteLabelPdf = () => {
-    const doc = generateAuditPdf(currentAudit, agencyBranding);
+    if (!isLoggedIn) return onRequireAuth('white-label');
+    const doc = generateAuditPdf(currentAudit, agencyBranding, userPlan);
     doc.save(`${agencyBranding.agencyName.toLowerCase().replace(/\s+/g, '-')}-audit-report.pdf`);
   };
 
@@ -707,14 +724,25 @@ export const ScanPage: React.FC<ScanPageProps> = ({
 
               {/* Action Tools: Search & Expand/Collapse */}
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopyAllRemediations}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                >
-                  {copiedAllFixes ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedAllFixes ? 'All Fixes Copied!' : 'Copy All Code Fixes'}</span>
-                </button>
+                {userPlan === 'free' ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenPdfPreview(currentAudit)}
+                    className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Unlock Copy All Code Fixes</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleCopyAllRemediations}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    {copiedAllFixes ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedAllFixes ? 'All Fixes Copied!' : 'Copy All Code Fixes'}</span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -824,7 +852,7 @@ export const ScanPage: React.FC<ScanPageProps> = ({
                               </span>
                             </div>
                             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                              {issue.description}
+                              {issue.plainSummary || issue.description}
                             </p>
                           </div>
                         </div>
@@ -844,74 +872,100 @@ export const ScanPage: React.FC<ScanPageProps> = ({
                       {/* Expandable Fix Details */}
                       {isExpanded && (
                         <div className="px-4 pb-5 sm:px-5 sm:pb-6 pt-2 border-t border-slate-200/60 dark:border-[#1E293B] bg-white dark:bg-[#111827] space-y-4">
-                          
-                          {/* Affected Element Selector */}
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="font-bold text-slate-500 dark:text-slate-400 uppercase text-[10px]">Target Element:</span>
-                            <code className="px-2 py-0.5 bg-slate-100 dark:bg-[#0B1120] rounded text-slate-800 dark:text-slate-200 font-mono text-[11px] border border-slate-200 dark:border-[#1E293B]">
-                              {issue.affectedElement}
-                            </code>
-                          </div>
 
-                          {/* Impact & Fix Explanation */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#1E293B]">
-                              <span className="font-bold text-slate-900 dark:text-[#E2E8F0] block mb-1">Why this matters:</span>
-                              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{issue.impact}</p>
-                            </div>
+                          {userPlan === 'free' ? (
+                            <>
+                              {/* Free tier: plain-language risk framing + a directional hint, full fix locked */}
+                              <div className="p-3.5 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/60 text-xs">
+                                <span className="font-bold text-red-900 dark:text-red-300 block mb-1">Why this matters:</span>
+                                <p className="text-red-800/90 dark:text-red-200/90 leading-relaxed">{issue.riskStatement || issue.impact}</p>
+                              </div>
 
-                            <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60">
-                              <span className="font-bold text-emerald-950 dark:text-emerald-300 block mb-1">Recommended Fix:</span>
-                              <p className="text-emerald-900 dark:text-emerald-200 leading-relaxed">{issue.howToFix}</p>
-                            </div>
-                          </div>
+                              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#1E293B] text-xs">
+                                <span className="font-bold text-slate-900 dark:text-[#E2E8F0] block mb-1">Where to start:</span>
+                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                  {issue.freeHint || 'Upgrade to see the exact element and the recommended fix for this issue.'}
+                                </p>
+                              </div>
 
-                          {/* Code Comparison Snippets */}
-                          {(issue.codeSnippetFaulty || issue.codeSnippetFix) && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
-                              
-                              {/* Faulty Code */}
-                              {issue.codeSnippetFaulty && (
-                                <div className="rounded-xl overflow-hidden border border-red-200 dark:border-red-900/60 bg-slate-950 text-slate-200">
-                                  <div className="px-3 py-1.5 bg-red-950/80 border-b border-red-900 flex items-center justify-between text-[11px] font-bold text-red-200">
-                                    <span>❌ Detected Faulty HTML</span>
-                                  </div>
-                                  <pre className="p-3 font-mono text-[11px] overflow-x-auto text-red-200/90 leading-relaxed">
-                                    <code>{issue.codeSnippetFaulty}</code>
-                                  </pre>
+                              <LockedSection
+                                compact
+                                title="Exact Fix & Code Patch Locked in Free Plan"
+                                description="Upgrade to see the precise element, the faulty vs. corrected HTML, and one-click copy fixes."
+                                onUpgrade={() => onOpenPdfPreview(currentAudit)}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              {/* Affected Element Selector */}
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase text-[10px]">Target Element:</span>
+                                <code className="px-2 py-0.5 bg-slate-100 dark:bg-[#0B1120] rounded text-slate-800 dark:text-slate-200 font-mono text-[11px] border border-slate-200 dark:border-[#1E293B]">
+                                  {issue.affectedElement}
+                                </code>
+                              </div>
+
+                              {/* Impact & Fix Explanation */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#1E293B]">
+                                  <span className="font-bold text-slate-900 dark:text-[#E2E8F0] block mb-1">Why this matters:</span>
+                                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{issue.impact}</p>
+                                </div>
+
+                                <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60">
+                                  <span className="font-bold text-emerald-950 dark:text-emerald-300 block mb-1">Recommended Fix:</span>
+                                  <p className="text-emerald-900 dark:text-emerald-200 leading-relaxed">{issue.howToFix}</p>
+                                </div>
+                              </div>
+
+                              {/* Code Comparison Snippets */}
+                              {(issue.codeSnippetFaulty || issue.codeSnippetFix) && (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
+
+                                  {/* Faulty Code */}
+                                  {issue.codeSnippetFaulty && (
+                                    <div className="rounded-xl overflow-hidden border border-red-200 dark:border-red-900/60 bg-slate-950 text-slate-200">
+                                      <div className="px-3 py-1.5 bg-red-950/80 border-b border-red-900 flex items-center justify-between text-[11px] font-bold text-red-200">
+                                        <span>❌ Detected Faulty HTML</span>
+                                      </div>
+                                      <pre className="p-3 font-mono text-[11px] overflow-x-auto text-red-200/90 leading-relaxed">
+                                        <code>{issue.codeSnippetFaulty}</code>
+                                      </pre>
+                                    </div>
+                                  )}
+
+                                  {/* Corrected Code Fix */}
+                                  {issue.codeSnippetFix && (
+                                    <div className="rounded-xl overflow-hidden border border-emerald-200 dark:border-emerald-900/60 bg-slate-950 text-slate-200">
+                                      <div className="px-3 py-1.5 bg-emerald-950/80 border-b border-emerald-900 flex items-center justify-between text-[11px] font-bold text-emerald-200">
+                                        <span>✅ Recommended Accessible Fix</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCopyCode(issue.id, issue.codeSnippetFix!)}
+                                          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-emerald-900 hover:bg-emerald-800 text-white transition-colors"
+                                        >
+                                          {copiedCodeId === issue.id ? (
+                                            <>
+                                              <Check className="w-3 h-3 text-emerald-400" />
+                                              <span>Copied!</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Copy className="w-3 h-3" />
+                                              <span>Copy Code</span>
+                                            </>
+                                          )}
+                                        </button>
+                                      </div>
+                                      <pre className="p-3 font-mono text-[11px] overflow-x-auto text-emerald-200/90 leading-relaxed">
+                                        <code>{issue.codeSnippetFix}</code>
+                                      </pre>
+                                    </div>
+                                  )}
+
                                 </div>
                               )}
-
-                              {/* Corrected Code Fix */}
-                              {issue.codeSnippetFix && (
-                                <div className="rounded-xl overflow-hidden border border-emerald-200 dark:border-emerald-900/60 bg-slate-950 text-slate-200">
-                                  <div className="px-3 py-1.5 bg-emerald-950/80 border-b border-emerald-900 flex items-center justify-between text-[11px] font-bold text-emerald-200">
-                                    <span>✅ Recommended Accessible Fix</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleCopyCode(issue.id, issue.codeSnippetFix!)}
-                                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-emerald-900 hover:bg-emerald-800 text-white transition-colors"
-                                    >
-                                      {copiedCodeId === issue.id ? (
-                                        <>
-                                          <Check className="w-3 h-3 text-emerald-400" />
-                                          <span>Copied!</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Copy className="w-3 h-3" />
-                                          <span>Copy Code</span>
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
-                                  <pre className="p-3 font-mono text-[11px] overflow-x-auto text-emerald-200/90 leading-relaxed">
-                                    <code>{issue.codeSnippetFix}</code>
-                                  </pre>
-                                </div>
-                              )}
-
-                            </div>
+                            </>
                           )}
 
                         </div>
@@ -1295,6 +1349,7 @@ export const ScanPage: React.FC<ScanPageProps> = ({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleChecklistItem(item.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                     />
                     <div>

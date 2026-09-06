@@ -1,10 +1,10 @@
-import puppeteer, { Browser } from 'puppeteer';
+import puppeteer, { Browser, TimeoutError } from 'puppeteer';
 import { AxePuppeteer } from '@axe-core/puppeteer';
 import { buildAuditResult } from './axeMapping';
 import { assertUrlIsScannable } from './urlSafety';
 import type { AuditResult } from '../types';
 
-export const SCAN_NAV_TIMEOUT_MS = 25000;
+export const SCAN_NAV_TIMEOUT_MS = 45000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -40,7 +40,13 @@ export async function performScan(url?: string, htmlSnippet?: string): Promise<A
     page.setDefaultNavigationTimeout(SCAN_NAV_TIMEOUT_MS);
 
     if (scannedUrl) {
-      await page.goto(scannedUrl.toString(), { waitUntil: 'networkidle2', timeout: SCAN_NAV_TIMEOUT_MS });
+      try {
+        await page.goto(scannedUrl.toString(), { waitUntil: 'networkidle2', timeout: SCAN_NAV_TIMEOUT_MS });
+      } catch (err) {
+        // Sites with continuous analytics/ad/tracker traffic never go network-idle;
+        // the DOM has still loaded by this point, so scan it instead of failing outright.
+        if (!(err instanceof TimeoutError)) throw err;
+      }
     } else {
       await page.setContent(
         `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"></head><body>${htmlSnippet}</body></html>`,

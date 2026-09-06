@@ -14,12 +14,12 @@ interface PaymentRow {
   currency: string;
   plan: string | null;
   status: string;
-  stripe_payment_intent_id: string | null;
-  stripe_invoice_id: string | null;
+  razorpay_payment_id: string | null;
+  razorpay_invoice_id: string | null;
   refund_reason: string | null;
   created_at: string;
 }
-interface PaymentsResponse { rows: PaymentRow[]; page: number; pageSize: number; total: number; stripeConnected: boolean; }
+interface PaymentsResponse { rows: PaymentRow[]; page: number; pageSize: number; total: number; razorpayConnected: boolean; }
 
 export const PaymentsTab: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -51,11 +51,11 @@ export const PaymentsTab: React.FC = () => {
     <div className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 space-y-4">
       <div>
         <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Payments</h3>
-        <p className="text-xs text-slate-500">Transaction ledger, reconciled from Stripe.</p>
+        <p className="text-xs text-slate-500">Transaction ledger, reconciled from Razorpay.</p>
       </div>
 
-      {data && !data.stripeConnected && (
-        <NotConnectedBanner message="Stripe isn't connected on this deployment yet, so refunds are disabled and this ledger will stay empty until billing is wired up." />
+      {data && !data.razorpayConnected && (
+        <NotConnectedBanner message="Razorpay isn't connected on this deployment yet, so refunds are disabled and this ledger will stay empty until billing is wired up." />
       )}
 
       <DataStateWrapper loading={loading} error={error} empty={data?.rows.length === 0} emptyMessage="No payments yet.">
@@ -70,7 +70,7 @@ export const PaymentsTab: React.FC = () => {
                     <th className="py-2.5 px-3">Amount</th>
                     <th className="py-2.5 px-3">Plan</th>
                     <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3">Stripe Ref</th>
+                    <th className="py-2.5 px-3">Razorpay Ref</th>
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -85,7 +85,7 @@ export const PaymentsTab: React.FC = () => {
                         <StatusBadge status={p.status} />
                         {p.refund_reason && <p className="text-[10px] text-slate-400 mt-0.5">{p.refund_reason}</p>}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[11px]">{p.stripe_payment_intent_id || p.stripe_invoice_id || '—'}</td>
+                      <td className="py-2.5 px-3 font-mono text-[11px]">{p.razorpay_payment_id || p.razorpay_invoice_id || '—'}</td>
                       <td className="py-2.5 px-3 text-right">
                         {p.status === 'succeeded' && (
                           <button onClick={() => { setRefundTarget(p); setRefundAmount(String(p.amount)); setRefundReason(''); setRefundError(null); }} className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 flex items-center gap-1 ml-auto">

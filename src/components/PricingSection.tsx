@@ -9,10 +9,10 @@ import {
   ShieldCheck,
   Star
 } from 'lucide-react';
-import { PricingTier } from '../types';
+import { PricingTier, PlanTier } from '../types';
 
 interface PricingSectionProps {
-  onSelectPlan: (planId: string) => void;
+  onSelectPlan: (tier: PlanTier, billingCycle: 'monthly' | 'annual') => void;
   onScanClick: () => void;
 }
 
@@ -220,7 +220,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
                       if (plan.id === 'free') {
                         onScanClick();
                       } else {
-                        onSelectPlan(plan.id);
+                        onSelectPlan(plan.tier, billingCycle);
                       }
                     }}
                     className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all active:scale-98 min-h-[44px] ${

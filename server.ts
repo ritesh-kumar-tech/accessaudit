@@ -7,6 +7,7 @@ import { getUserFromAuthHeader, checkScanQuota, recordAnonymousScan } from './sr
 import { startScanRecord, completeScanRecord, failScanRecord } from './src/services/scanLifecycle';
 import { createAdminRouter } from './src/server/adminRoutes';
 import { createReportsRouter } from './src/server/reportRoutes';
+import { createCheckoutRouter, createCheckoutWebhookHandler } from './src/server/checkoutRoutes';
 import { startMonitoringScheduler } from './src/services/monitoringScheduler';
 
 async function startServer() {
@@ -16,6 +17,10 @@ async function startServer() {
   // Needed for req.ip to reflect the real client address behind a reverse proxy
   // (Render, Cloud Run, etc.) instead of the proxy's own address.
   app.set('trust proxy', 1);
+
+  // Razorpay webhook needs the exact raw request bytes to verify its
+  // signature, so it must be registered before the global JSON body parser.
+  app.post('/api/checkout/webhook', express.raw({ type: 'application/json' }), createCheckoutWebhookHandler());
 
   app.use(express.json({ limit: '1mb' }));
 
@@ -71,6 +76,7 @@ async function startServer() {
 
   app.use('/api/reports', createReportsRouter());
   app.use('/api/admin', createAdminRouter());
+  app.use('/api/checkout', createCheckoutRouter());
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

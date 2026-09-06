@@ -47,7 +47,7 @@ export const SystemHealthTab: React.FC = () => {
             {data.monitoringScheduler.lastTickError && <p className="text-red-600 dark:text-red-400">{data.monitoringScheduler.lastTickError}</p>}
           </Card>
 
-          <Card title="Stripe Webhooks" status={data.webhooks.status}>
+          <Card title="Razorpay Webhooks" status={data.webhooks.status}>
             {data.webhooks.status === 'not_configured' ? (
               <p>Not connected on this deployment yet.</p>
             ) : (

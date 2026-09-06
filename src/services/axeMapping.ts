@@ -2,6 +2,7 @@
  * Maps raw axe-core results into the app's AuditResult/AuditIssue shape.
  */
 import { AuditIssue, AuditResult, Category, DeveloperChecklistItem, Severity } from '../types';
+import { getIssueCopy } from './issueCopy';
 
 interface AxeNode {
   html: string;
@@ -90,6 +91,7 @@ export function buildAuditResult(
       .slice(0, 3)
       .map(n => n.target.join(' '))
       .join(', ') || rule.id;
+    const copy = getIssueCopy(rule.id, severity, rule.help);
 
     return {
       id: `axe-${rule.id}-${idx}`,
@@ -97,6 +99,9 @@ export function buildAuditResult(
       severity,
       title: rule.help,
       description: rule.description,
+      plainSummary: copy.plainSummary,
+      riskStatement: copy.riskStatement,
+      freeHint: copy.freeHint,
       wcagRule,
       wcagLevel,
       affectedElement,

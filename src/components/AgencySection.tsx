@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   Lock
 } from 'lucide-react';
-import { AgencyBranding, AuditResult } from '../types';
+import { AgencyBranding, AuditResult, PlanTier } from '../types';
 import { generateAuditPdf } from '../services/pdfGenerator';
 import { sampleAudits } from '../data/mockAudits';
 
@@ -22,7 +22,7 @@ interface AgencySectionProps {
   agencyBranding: AgencyBranding;
   onUpdateBranding: (branding: Partial<AgencyBranding>) => void;
   onOpenPdfPreview: (audit: AuditResult) => void;
-  onSelectPlan: (planId: string) => void;
+  onSelectPlan: (tier: PlanTier, billingCycle: 'monthly' | 'annual') => void;
 }
 
 export const AgencySection: React.FC<AgencySectionProps> = ({
@@ -496,7 +496,7 @@ export const AgencySection: React.FC<AgencySectionProps> = ({
                 <button
                   type="button"
                   id="calc-upgrade-agency-btn"
-                  onClick={() => onSelectPlan('agency')}
+                  onClick={() => onSelectPlan('agency', 'monthly')}
                   className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-white font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all active:scale-98 min-h-[48px]"
                 >
                   <span>Start Agency White-Label Trial ($79/mo)</span>

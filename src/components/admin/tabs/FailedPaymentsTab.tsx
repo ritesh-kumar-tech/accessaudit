@@ -11,7 +11,7 @@ interface FailedPaymentRow {
   failure_reason: string | null;
   created_at: string;
 }
-interface FailedPaymentsResponse { rows: FailedPaymentRow[]; stripeConnected: boolean; }
+interface FailedPaymentsResponse { rows: FailedPaymentRow[]; razorpayConnected: boolean; }
 
 export const FailedPaymentsTab: React.FC = () => {
   const { data, loading, error } = useAdminData<FailedPaymentsResponse>('/billing/failed-payments');
@@ -23,8 +23,8 @@ export const FailedPaymentsTab: React.FC = () => {
         <p className="text-xs text-slate-500">Customers with a declined or failed charge -- reach out before they churn involuntarily.</p>
       </div>
 
-      {data && !data.stripeConnected && (
-        <NotConnectedBanner message="Stripe isn't connected on this deployment yet, so this view will stay empty until billing is wired up." />
+      {data && !data.razorpayConnected && (
+        <NotConnectedBanner message="Razorpay isn't connected on this deployment yet, so this view will stay empty until billing is wired up." />
       )}
 
       <DataStateWrapper loading={loading} error={error} empty={data?.rows.length === 0} emptyMessage="No failed payments right now.">

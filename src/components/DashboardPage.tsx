@@ -73,7 +73,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
     supabase
       .from('scans')
-      .select('id, url, overall_score, grade, status, critical_count, moderate_count, minor_count, passed_count, created_at')
+      .select('id, url, overall_score, grade, result_status, critical_count, moderate_count, minor_count, passed_count, created_at')
       .order('created_at', { ascending: false })
       .limit(25)
       .then(({ data, error }) => {
@@ -86,7 +86,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             url: row.url,
             overallScore: row.overall_score,
             grade: row.grade,
-            status: row.status,
+            status: row.result_status,
             criticalCount: row.critical_count,
             moderateCount: row.moderate_count,
             minorCount: row.minor_count,
@@ -591,7 +591,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
 
                 <div className="text-xs text-slate-500 space-y-1">
-                  <p>• Payments are encrypted and secured via Stripe.</p>
+                  <p>• Payments are encrypted and secured via Razorpay.</p>
                   <p>• Invoices include VAT/Tax breakdown for corporate accounting.</p>
                 </div>
               </div>

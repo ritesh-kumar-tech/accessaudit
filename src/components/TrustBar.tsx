@@ -11,10 +11,10 @@ export const TrustBar: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 lg:py-16 bg-white dark:bg-[#111827] border-y border-slate-200 dark:border-[#1E293B] transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div className="text-center mb-8">
+    <section className="py-14 lg:py-20 bg-white dark:bg-[#111827] border-y border-slate-200 dark:border-[#1E293B] transition-colors duration-200">
+      <div className="container-wide">
+
+        <div className="text-center mb-10">
           <p className="text-xs uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">
             Trusted by forward-thinking web agencies & digital product teams in EU, UK & US
           </p>

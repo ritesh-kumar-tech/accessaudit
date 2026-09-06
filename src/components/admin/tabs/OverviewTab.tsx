@@ -39,8 +39,8 @@ export const OverviewTab: React.FC = () => {
             <Stat label="Total Users" value={data.totalUsers} />
             <Stat label="Free Users" value={data.freeUsers} />
             <Stat label="Paid Subscribers" value={data.paidSubscribers} />
-            <Stat label="MRR" value={`$${data.mrr.toLocaleString()}`} hint={data.mrr === 0 ? 'No active Stripe subscriptions yet' : undefined} />
-            <Stat label="Active Pro Subscriptions" value={data.activeProSubscriptions} hint="From Stripe-backed subscriptions" />
+            <Stat label="MRR" value={`$${data.mrr.toLocaleString()}`} hint={data.mrr === 0 ? 'No active Razorpay subscriptions yet' : undefined} />
+            <Stat label="Active Pro Subscriptions" value={data.activeProSubscriptions} hint="From Razorpay-backed subscriptions" />
             <Stat label="Active Monitoring Users" value={data.activeMonitoringSubscriptions} hint="Users with 1+ enabled monitored site" />
             <Stat label="Active Agency Subscriptions" value={data.activeAgencySubscriptions} />
             <Stat label="New Signups (7d)" value={data.newSignups7d} />
