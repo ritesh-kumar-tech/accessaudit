@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # Chromium runtime libraries required by Puppeteer's bundled browser.
 RUN apt-get update && apt-get install -y --no-install-recommends \
