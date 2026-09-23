@@ -1,6 +1,6 @@
--- AccessAudit — combined schema (0001_init.sql + 0002_admin_platform.sql)
--- Generated for convenience; the source of truth is the two files in
--- supabase/migrations/. Keep both in sync if you edit one.
+-- AccessAudit — combined schema (0001_init.sql + 0002_admin_platform.sql + 0003_razorpay_billing.sql)
+-- Generated for convenience; the source of truth is the migration files in
+-- supabase/migrations/. Keep them in sync if you edit one.
 --
 -- IMPORTANT: this script uses Supabase-specific objects (the `auth.users`
 -- table, `storage.buckets`/`storage.objects`, `auth.uid()`) that only exist
@@ -235,13 +235,13 @@ create policy "reports_bucket_select_own" on storage.objects
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
-  stripe_customer_id text,
-  stripe_subscription_id text unique,
+  razorpay_customer_id text,
+  razorpay_subscription_id text unique,
   plan text not null,
   status text not null check (status in ('active', 'trialing', 'past_due', 'cancelled', 'incomplete')),
   price_id text,
   amount numeric,
-  currency text default 'usd',
+  currency text default 'inr',
   interval text,
   current_period_end timestamptz,
   cancel_at_period_end boolean not null default false,
@@ -252,10 +252,10 @@ create table if not exists public.subscriptions (
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users (id) on delete set null,
-  stripe_payment_intent_id text,
-  stripe_invoice_id text,
+  razorpay_payment_id text,
+  razorpay_invoice_id text,
   amount numeric not null,
-  currency text not null default 'usd',
+  currency text not null default 'inr',
   plan text,
   status text not null check (status in ('succeeded', 'failed', 'refunded', 'partially_refunded')),
   failure_reason text,
@@ -266,7 +266,7 @@ create table if not exists public.payments (
 
 create table if not exists public.webhook_events (
   id uuid primary key default gen_random_uuid(),
-  stripe_event_id text unique not null,
+  razorpay_event_id text unique not null,
   event_type text not null,
   received_at timestamptz not null default now(),
   processed_status text not null default 'pending' check (processed_status in ('pending', 'processed', 'failed')),

@@ -2,10 +2,11 @@ import { Router } from 'express';
 import type { AdminRequest } from '../../services/adminAuth';
 import { supabaseAdmin } from '../../services/supabaseServer';
 import { logAdminAction } from '../../services/auditLog';
+import { isRazorpayConfigured } from '../../services/razorpayServer';
 import { parsePagination } from './helpers';
 
 /**
- * Subscriptions/payments/webhooks are Stripe-backed. Until the Stripe
+ * Subscriptions/payments/webhooks are Razorpay-backed. Until the Razorpay
  * integration batch is wired up, these tables are real but empty -- the
  * endpoints below return real (empty) data rather than fabricated rows,
  * and mutating actions (refunds) return an honest 501 instead of pretending
@@ -32,7 +33,7 @@ export function createBillingRouter(): Router {
       .order('created_at', { ascending: false })
       .range(from, to);
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ rows: await withCustomerEmails(data || []), page, pageSize, total: count || 0, stripeConnected: Boolean(process.env.STRIPE_SECRET_KEY) });
+    res.json({ rows: await withCustomerEmails(data || []), page, pageSize, total: count || 0, razorpayConnected: isRazorpayConfigured });
   });
 
   router.get('/payments', async (req, res) => {
@@ -44,7 +45,7 @@ export function createBillingRouter(): Router {
       .order('created_at', { ascending: false })
       .range(from, to);
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ rows: await withCustomerEmails(data || []), page, pageSize, total: count || 0, stripeConnected: Boolean(process.env.STRIPE_SECRET_KEY) });
+    res.json({ rows: await withCustomerEmails(data || []), page, pageSize, total: count || 0, razorpayConnected: isRazorpayConfigured });
   });
 
   router.get('/failed-payments', async (req, res) => {
@@ -56,19 +57,19 @@ export function createBillingRouter(): Router {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ rows: await withCustomerEmails(data || []), stripeConnected: Boolean(process.env.STRIPE_SECRET_KEY) });
+    res.json({ rows: await withCustomerEmails(data || []), razorpayConnected: isRazorpayConfigured });
   });
 
   router.post('/payments/:id/refund', async (req: AdminRequest, res) => {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(501).json({ error: 'Stripe is not connected on this deployment yet, so refunds cannot be processed.' });
+    if (!isRazorpayConfigured) {
+      return res.status(501).json({ error: 'Razorpay is not connected on this deployment yet, so refunds cannot be processed.' });
     }
     const { amount, reason } = req.body;
     if (!amount || !reason?.trim()) {
       return res.status(400).json({ error: 'A refund amount and reason are required.' });
     }
-    // Real Stripe refund + payments/webhook_events reconciliation lands with the Stripe billing batch.
-    // Stripe stays authoritative: a refund is issued through the Stripe API first, and this row is
+    // Real Razorpay refund + payments/webhook_events reconciliation lands with the Razorpay billing batch.
+    // Razorpay stays authoritative: a refund is issued through the Razorpay API first, and this row is
     // only ever updated afterward by the webhook handler confirming it -- never edited directly here.
     return res.status(501).json({ error: 'Refund processing is not implemented yet.' });
   });
@@ -82,7 +83,7 @@ export function createBillingRouter(): Router {
       .order('received_at', { ascending: false })
       .range(from, to);
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ rows: data || [], page, pageSize, total: count || 0, stripeConfigured: Boolean(process.env.STRIPE_WEBHOOK_SECRET) });
+    res.json({ rows: data || [], page, pageSize, total: count || 0, razorpayConfigured: Boolean(process.env.RAZORPAY_WEBHOOK_SECRET) });
   });
 
   return router;

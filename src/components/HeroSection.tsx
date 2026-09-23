@@ -1,37 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  ArrowRight, 
-  ShieldCheck, 
-  AlertCircle, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Sparkles, 
-  FileText, 
-  Check, 
-  Code2,
-  Lock,
-  Layers
-} from 'lucide-react';
-import { sampleAudits } from '../data/mockAudits';
-import { AuditResult, AgencyBranding } from '../types';
+import { Search, ArrowRight, Sparkles, Check, Code2 } from 'lucide-react';
 
 interface HeroSectionProps {
   onRunScan: (targetUrl: string, htmlSnippet?: string) => void;
-  onOpenPdfPreview: (audit: AuditResult) => void;
-  sampleAudit: AuditResult;
+  onExploreSample: () => void;
   isScanning: boolean;
-  agencyBranding: AgencyBranding;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onRunScan,
-  onOpenPdfPreview,
-  sampleAudit,
+  onExploreSample,
   isScanning,
-  agencyBranding,
 }) => {
-  const [urlInput, setUrlInput] = useState('https://www.luxe-apparel.store');
+  const [urlInput, setUrlInput] = useState('');
   const [activeTab, setActiveTab] = useState<'url' | 'code'>('url');
   const [customHtml, setCustomHtml] = useState(
 `<button class="bg-gray-200 text-gray-400">Checkout</button>
@@ -58,42 +39,84 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <section className="relative overflow-hidden pt-10 pb-20 lg:pt-16 lg:pb-28 bg-gradient-to-b from-blue-50/60 via-slate-50 to-[#F8FAFC] dark:from-[#0B1120] dark:via-[#0B1120] dark:to-[#0B1120] transition-colors duration-200">
-      
-      {/* Background ambient orbs */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 pointer-events-none overflow-hidden opacity-60 dark:opacity-20">
-        <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-400/20 dark:bg-blue-600/15 rounded-full blur-3xl"></div>
-        <div className="absolute top-12 right-1/4 w-96 h-96 bg-emerald-400/20 dark:bg-emerald-600/15 rounded-full blur-3xl"></div>
+    <section className="relative overflow-hidden pt-8 pb-12 lg:pt-12 lg:pb-14 w-full bg-gradient-to-b from-blue-50/60 via-slate-50 to-[#F8FAFC] dark:from-[#0B1120] dark:via-[#0B1120] dark:to-[#0B1120] transition-colors duration-200">
+
+      {/* Background: soft blue/cyan/teal color washes at the sides + flowing wave
+          lines hugging the bottom edge, all CSS/SVG (no image, no text). Kept out
+          of the horizontal/vertical center so the headline and scan box sit on a
+          clean, light area. Contained to this section only (parent's overflow-hidden
+          clips it, and it's positioned absolute within this section's own box). */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute top-1/3 -left-20 w-64 h-64 sm:w-96 sm:h-96 bg-cyan-300/25 dark:bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 -right-20 w-64 h-64 sm:w-96 sm:h-96 bg-blue-300/25 dark:bg-blue-500/10 rounded-full blur-3xl"></div>
+
+        <svg
+          className="absolute inset-x-0 bottom-0 w-full h-1/2 sm:h-[55%]"
+          viewBox="0 0 1440 400"
+          preserveAspectRatio="none"
+          fill="none"
+        >
+          <defs>
+            <linearGradient id="hero-wave-a" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#93C5FD" />
+              <stop offset="50%" stopColor="#67E8F9" />
+              <stop offset="100%" stopColor="#5EEAD4" />
+            </linearGradient>
+            <linearGradient id="hero-wave-b" x1="0" y1="0" x2="1440" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#BFDBFE" />
+              <stop offset="50%" stopColor="#A5F3FC" />
+              <stop offset="100%" stopColor="#99F6E4" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0,220 C240,160 480,280 720,220 C960,160 1200,260 1440,200 L1440,400 L0,400 Z"
+            fill="url(#hero-wave-a)"
+            className="opacity-[0.18] dark:opacity-[0.08]"
+          />
+          <path
+            d="M0,280 C260,320 500,240 760,290 C1020,340 1220,260 1440,300 L1440,400 L0,400 Z"
+            fill="url(#hero-wave-b)"
+            className="opacity-[0.22] dark:opacity-[0.1]"
+          />
+          <path
+            d="M0,340 C300,310 620,360 900,330 C1140,305 1300,345 1440,330 L1440,400 L0,400 Z"
+            fill="url(#hero-wave-b)"
+            className="opacity-[0.15] dark:opacity-[0.07]"
+          />
+        </svg>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+      <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
+
         {/* Top Eyebrow Tag */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#111827] border border-blue-200/80 dark:border-[#1E293B] shadow-xs text-xs font-semibold text-slate-800 dark:text-slate-200">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-blue-700 dark:text-blue-400 font-bold">New:</span> European Accessibility Act (EAA) & WCAG 2.2 Ready
-            <ArrowRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ml-0.5" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 dark:bg-[#111827]/70 backdrop-blur-sm border border-blue-200/70 dark:border-[#1E293B] shadow-premium-sm text-[11px] font-semibold text-slate-800 dark:text-slate-200">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-blue-700 dark:text-blue-400 font-bold">New:</span> EAA & WCAG 2.2 Ready
+            <ArrowRight className="w-3 h-3 text-blue-600 dark:text-blue-400 ml-0.5" />
           </div>
         </div>
 
-        {/* Hero Title & Subheadline */}
-        <div className="text-center max-w-4xl mx-auto mb-10">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-[#E2E8F0] tracking-tight leading-[1.12]">
+        {/* Hero Title */}
+        <div className="relative text-center max-w-3xl mx-auto mb-8">
+          {/* Subtle radial glow behind the headline only */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[220%] pointer-events-none opacity-70 dark:opacity-40"
+            style={{ background: 'radial-gradient(closest-side, rgba(37,99,235,0.10), rgba(37,99,235,0) 70%)' }}
+            aria-hidden="true"
+          ></div>
+          <h1 className="relative text-4xl sm:text-5xl lg:text-6xl xl:text-[64px] font-extrabold text-slate-900 dark:text-[#E2E8F0] tracking-tight leading-[1.08]">
             Find Every Accessibility Issue on Your Website in{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-emerald-600 dark:from-blue-400 dark:via-blue-500 dark:to-emerald-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 dark:from-blue-400 dark:via-sky-400 dark:to-emerald-400 bg-clip-text text-transparent">
               60 Seconds.
             </span>
           </h1>
-          <p className="mt-5 text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Automated WCAG 2.2 AA and ADA Title III compliance diagnostics for agencies, developers, and digital brands. Generate executive-ready PDF audit reports instantly.
-          </p>
         </div>
 
         {/* Main Interactive Scanner Input Container */}
-        <div className="max-w-3xl mx-auto mb-16">
-          <div className="bg-white dark:bg-[#111827] rounded-2xl p-3.5 sm:p-5 shadow-xl shadow-slate-200/70 dark:shadow-black/40 border border-slate-200 dark:border-[#1E293B] transition-colors">
-            
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white dark:bg-[#111827] rounded-[20px] p-5 sm:p-7 shadow-premium-lg ring-1 ring-slate-900/[0.03] dark:ring-white/[0.03] border border-slate-200 dark:border-[#1E293B] transition-colors">
+
             {/* Input Mode Toggle Tabs */}
             <div className="flex items-center justify-between mb-3.5 px-1 border-b border-slate-100 dark:border-[#1E293B] pb-3">
               <div className="flex items-center gap-2">
@@ -145,14 +168,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       onChange={(e) => setUrlInput(e.target.value)}
                       placeholder="https://yourwebsite.com"
                       required
-                      className="block w-full min-h-[48px] pl-11 pr-4 py-3.5 text-slate-900 dark:text-[#E2E8F0] font-medium placeholder-slate-400 dark:placeholder-slate-500 bg-slate-50 dark:bg-[#0B1120] hover:bg-slate-50/80 dark:hover:bg-[#0B1120]/80 focus:bg-white dark:focus:bg-[#0B1120] border border-slate-200 dark:border-[#1E293B] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm sm:text-base transition-all"
+                      className="block w-full min-h-[52px] pl-11 pr-4 py-3.5 text-slate-900 dark:text-[#E2E8F0] font-medium placeholder-slate-500 dark:placeholder-slate-500 bg-slate-50 dark:bg-[#0B1120] hover:bg-slate-50/80 dark:hover:bg-[#0B1120]/80 focus:bg-white dark:focus:bg-[#0B1120] border border-slate-200 dark:border-[#1E293B] rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm sm:text-base transition-all"
                     />
                   </div>
                   <button
                     type="submit"
                     id="hero-scan-submit-btn"
                     disabled={isScanning}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 sm:py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-extrabold rounded-xl shadow-lg shadow-blue-600/30 ring-2 ring-blue-400/20 hover:shadow-xl transition-all text-base whitespace-nowrap active:scale-98 min-h-[48px]"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 min-h-[52px] bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white font-bold rounded-xl shadow-premium-md hover:shadow-premium-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 text-base whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   >
                     <span>Run Free Scan</span>
                     <Sparkles className="w-4 h-4 text-emerald-200 animate-pulse" />
@@ -172,7 +195,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     <button
                       type="submit"
                       id="hero-code-submit-btn"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 bg-gradient-to-r from-blue-600 via-blue-500 to-emerald-600 text-white font-extrabold rounded-xl shadow-md text-sm hover:opacity-95 transition-opacity min-h-[44px]"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-white font-bold rounded-xl shadow-premium-md hover:shadow-premium-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >
                       <span>Analyze Code Snippet</span>
                       <ArrowRight className="w-4 h-4" />
@@ -184,162 +207,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Preset shortcuts */}
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-[#1E293B] flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-slate-500 dark:text-slate-400 font-semibold">Try sample sites:</span>
+              <span className="text-slate-500 dark:text-slate-400 font-semibold">Try a sample:</span>
               <button
                 type="button"
                 onClick={() => handleSelectPreset('https://www.luxe-apparel.store')}
                 className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/60 hover:text-blue-700 dark:hover:text-blue-400 text-slate-700 dark:text-slate-300 font-medium transition-colors"
               >
-                🛍️ E-Commerce (Score 68)
+                🛍️ E-Commerce
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectPreset('https://cloudflow-analytics.io')}
                 className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/60 hover:text-blue-700 dark:hover:text-blue-400 text-slate-700 dark:text-slate-300 font-medium transition-colors"
               >
-                ⚡ SaaS App (Score 84)
+                ⚡ SaaS App
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectPreset('https://metrohealth-care.org')}
                 className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/60 hover:text-blue-700 dark:hover:text-blue-400 text-slate-700 dark:text-slate-300 font-medium transition-colors"
               >
-                🏥 Healthcare (Score 54)
+                🏥 Healthcare
               </button>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Enlarged Mockup Result Card (+20% scale, prominent soft glow/shadow as key proof element) */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-[#111827] rounded-3xl p-6 sm:p-8 lg:p-9 shadow-2xl shadow-blue-500/10 dark:shadow-black/60 border border-slate-200/90 dark:border-[#1E293B] ring-1 ring-blue-500/20 dark:ring-blue-500/10 relative transition-all">
-            
-            {/* Top Bar of Mockup */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-[#1E293B]">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/80 border border-blue-100 dark:border-blue-800/80 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xl shadow-xs">
-                  🛍️
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-slate-900 dark:text-[#E2E8F0] text-lg sm:text-xl">luxe-apparel.store</span>
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                      Audit Sample
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                    Scanned 342 DOM nodes • W3C WCAG 2.2 AA Benchmark
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  id="hero-mockup-pdf-btn"
-                  onClick={() => onOpenPdfPreview(sampleAudit)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Download PDF Report
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onRunScan('https://www.luxe-apparel.store')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs"
-                >
-                  <span>Explore Findings</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Score & Issue Breakdown Grid (Enlarged Gauge Card) */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 pt-6 items-center">
-              
-              {/* Score Gauge Block (~20% larger with circular glowing aesthetic) */}
-              <div className="md:col-span-4 flex flex-col items-center justify-center p-6 bg-slate-50/90 dark:bg-[#0B1120]/80 rounded-2xl border border-slate-100 dark:border-[#1E293B] text-center shadow-inner">
-                <div className="relative w-38 h-38 sm:w-40 sm:h-40 flex items-center justify-center mb-3">
-                  <svg className="w-full h-full -rotate-90 filter drop-shadow-sm" viewBox="0 0 100 100">
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="41"
-                      fill="transparent"
-                      stroke="#E2E8F0"
-                      strokeWidth="9"
-                      className="dark:stroke-slate-800"
-                    />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="41"
-                      fill="transparent"
-                      stroke="#F59E0B"
-                      strokeWidth="9"
-                      strokeDasharray="257.6"
-                      strokeDashoffset={257.6 - (257.6 * 68) / 100}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-[#E2E8F0] tracking-tight">68</span>
-                    <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">/ 100 Score</span>
-                  </div>
-                </div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/80 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Needs Remediation
-                </span>
-              </div>
-
-              {/* Badges and Findings List */}
-              <div className="md:col-span-8 space-y-3.5">
-                
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-xs font-bold">
-                    <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-                    4 Critical Violations
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    6 Moderate Issues
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    22 Passed Checks
-                  </div>
-                </div>
-
-                {/* Sample finding row items */}
-                <div className="space-y-2.5 pt-1">
-                  <div className="p-3 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between text-xs hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2 py-0.5 rounded bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-black text-[10px]">CRITICAL</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">Add to Cart button text contrast fails 4.5:1 ratio</span>
-                    </div>
-                    <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px] hidden sm:inline">WCAG 1.4.3</span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between text-xs hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2 py-0.5 rounded bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-black text-[10px]">CRITICAL</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">Missing alt attributes on 5 product gallery thumbnails</span>
-                    </div>
-                    <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px] hidden sm:inline">WCAG 1.1.1</span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between text-xs hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-black text-[10px]">MODERATE</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">Keyboard focus trap inside shopping cart drawer</span>
-                    </div>
-                    <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px] hidden sm:inline">WCAG 2.1.2</span>
-                  </div>
-                </div>
-
-              </div>
-
+              <button
+                type="button"
+                onClick={onExploreSample}
+                className="ml-auto px-2.5 py-1 rounded-md text-blue-700 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
+              >
+                See a sample report <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
 
           </div>

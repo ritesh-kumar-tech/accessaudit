@@ -6,7 +6,7 @@ import { daysAgoIso } from './helpers';
 
 /**
  * Every value here comes from a real query or a real in-process counter.
- * Where a subsystem isn't wired up yet (Stripe, email), the status is
+ * Where a subsystem isn't wired up yet (Razorpay, email), the status is
  * reported as "not_configured" rather than a fabricated "operational".
  */
 export function createSystemHealthRouter(): Router {
@@ -45,9 +45,9 @@ export function createSystemHealthRouter(): Router {
 
     const failedMonitoring24h = (await supabaseAdmin.from('monitoring_runs').select('id', { count: 'exact', head: true }).eq('status', 'failed').gte('started_at', daysAgoIso(1))).count || 0;
 
-    const stripeConfigured = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
+    const razorpayConfigured = Boolean(process.env.RAZORPAY_WEBHOOK_SECRET);
     let webhooks: any = { status: 'not_configured' };
-    if (stripeConfigured) {
+    if (razorpayConfigured) {
       const { data: recentEvents } = await supabaseAdmin.from('webhook_events').select('processed_status, received_at').order('received_at', { ascending: false }).limit(50);
       const failedEvents = (recentEvents || []).filter(e => e.processed_status === 'failed').length;
       webhooks = {

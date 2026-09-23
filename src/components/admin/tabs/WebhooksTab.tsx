@@ -7,13 +7,13 @@ import { NotConnectedBanner } from '../shared/NotConnectedBanner';
 
 interface WebhookRow {
   id: string;
-  stripe_event_id: string;
+  razorpay_event_id: string;
   event_type: string;
   received_at: string;
   processed_status: string;
   processing_error: string | null;
 }
-interface WebhooksResponse { rows: WebhookRow[]; page: number; pageSize: number; total: number; stripeConfigured: boolean; }
+interface WebhooksResponse { rows: WebhookRow[]; page: number; pageSize: number; total: number; razorpayConfigured: boolean; }
 
 export const WebhooksTab: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -22,12 +22,12 @@ export const WebhooksTab: React.FC = () => {
   return (
     <div className="p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 space-y-4">
       <div>
-        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Stripe Webhook Events</h3>
-        <p className="text-xs text-slate-500">Every event Stripe has sent us, keyed by Stripe's own event ID so duplicate deliveries can't double-process.</p>
+        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Razorpay Webhook Events</h3>
+        <p className="text-xs text-slate-500">Every event Razorpay has sent us, keyed by Razorpay's own event ID so duplicate deliveries can't double-process.</p>
       </div>
 
-      {data && !data.stripeConfigured && (
-        <NotConnectedBanner message="No Stripe webhook secret is configured on this deployment yet, so no events have been received." />
+      {data && !data.razorpayConfigured && (
+        <NotConnectedBanner message="No Razorpay webhook secret is configured on this deployment yet, so no events have been received." />
       )}
 
       <DataStateWrapper loading={loading} error={error} empty={data?.rows.length === 0} emptyMessage="No webhook events received yet.">
@@ -46,7 +46,7 @@ export const WebhooksTab: React.FC = () => {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {data.rows.map(w => (
                     <tr key={w.id}>
-                      <td className="py-2.5 px-3 font-mono text-[11px]">{w.stripe_event_id}</td>
+                      <td className="py-2.5 px-3 font-mono text-[11px]">{w.razorpay_event_id}</td>
                       <td className="py-2.5 px-3">{w.event_type}</td>
                       <td className="py-2.5 px-3 text-slate-500">{new Date(w.received_at).toLocaleString()}</td>
                       <td className="py-2.5 px-3">

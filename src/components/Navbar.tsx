@@ -50,9 +50,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16 sm:h-18">
           
           {/* Logo */}
-          <div 
+          <div
             onClick={() => handleNav('landing')}
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none shrink-0"
+            className="flex items-center gap-2 sm:gap-3.5 cursor-pointer group select-none shrink-0 lg:mr-4"
             id="nav-brand-logo"
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-200">
@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-[#E2E8F0] font-sans">
                   Access<span className="text-blue-600">Audit</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                <span className="hidden sm:inline-flex text-[10px] uppercase font-bold tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                   WCAG 2.2
                 </span>
               </div>
@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          <nav className="hidden xl:flex items-center gap-1.5 lg:gap-2.5">
             <button
               id="nav-link-home"
               onClick={() => handleNav('landing')}
@@ -157,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Desktop Auth Button */}
             {isLoggedIn ? (
-              <div className="hidden md:flex items-center gap-1">
+              <div className="hidden xl:flex items-center gap-1">
                 <button
                   id="nav-btn-account"
                   onClick={() => handleNav('dashboard')}
@@ -181,7 +181,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="nav-btn-auth"
                 onClick={() => (onToggleAuth ? onToggleAuth() : handleNav('auth'))}
-                className="hidden md:inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="hidden xl:inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <span>Sign In</span>
@@ -192,10 +192,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="nav-btn-scan-cta"
               onClick={onScanClick}
-              className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-98 shadow-sm transition-all shrink-0 min-h-[40px]"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 shadow-premium-sm hover:shadow-premium-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 shrink-0 min-h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               <span>Get Free Scan</span>
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <ArrowRight className="hidden sm:block w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             {/* Mobile Hamburger Button */}
@@ -203,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               id="mobile-menu-toggle-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-[#1E293B] transition-colors"
+              className="xl:hidden p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-[#1E293B] transition-colors"
               aria-label="Toggle navigation menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -221,7 +221,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Dropdown Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-[#1E293B] shadow-xl animate-in slide-in-from-top-2 duration-200">
+        <div className="xl:hidden bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-[#1E293B] shadow-xl animate-in slide-in-from-top-2 duration-200">
           <div className="px-4 py-4 space-y-1.5">
             <button
               onClick={() => handleNav('landing')}

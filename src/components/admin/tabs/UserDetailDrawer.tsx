@@ -130,7 +130,7 @@ export const UserDetailDrawer: React.FC<{ userId: string; onClose: () => void; o
                 </Section>
 
                 <Section title={`Subscription History (${data.subscriptions.length})`}>
-                  {data.subscriptions.length === 0 ? <Empty text="No Stripe subscription on record yet." /> : (
+                  {data.subscriptions.length === 0 ? <Empty text="No Razorpay subscription on record yet." /> : (
                     <Table head={['Plan', 'Status', 'Renews']} rows={data.subscriptions.map(s => [s.plan, <StatusBadge status={s.status} />, s.current_period_end ? new Date(s.current_period_end).toLocaleDateString() : '—'])} />
                   )}
                 </Section>
