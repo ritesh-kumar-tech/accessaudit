@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   X, 
   Download, 
@@ -36,6 +36,14 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [useAgencyBranding, setUseAgencyBranding] = useState<boolean>(activeTier === 'agency');
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const totalPages = activeTier === 'free' ? 2 : (activeTier === 'pro' ? 4 : 5);
   const brandName = (activeTier === 'agency' && useAgencyBranding) ? agencyBranding.agencyName : 'AccessAudit';
   const primaryColor = (activeTier === 'agency' && useAgencyBranding) ? agencyBranding.primaryColor : '#2563EB';
@@ -56,8 +64,16 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#0B1120] rounded-3xl w-full max-w-5xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tiered PDF report inspector"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-[#0B1120] rounded-3xl w-full max-w-5xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Modal Top Bar */}
         <div className="p-4 sm:p-5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -119,6 +135,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
 
             <button
               onClick={onClose}
+              aria-label="Close report preview"
               className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors ml-1"
             >
               <X className="w-5 h-5" />
@@ -197,6 +214,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
+              aria-label="Previous page"
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -207,6 +225,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
+              aria-label="Next page"
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />

@@ -1295,6 +1295,7 @@ export const ScanPage: React.FC<ScanPageProps> = ({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleChecklistItem(item.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                     />
                     <div>

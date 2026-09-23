@@ -220,7 +220,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPlan, on
                       if (plan.id === 'free') {
                         onScanClick();
                       } else {
-                        onSelectPlan(plan.id);
+                        onSelectPlan(plan.tier);
                       }
                     }}
                     className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all active:scale-98 min-h-[44px] ${

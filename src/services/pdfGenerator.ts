@@ -45,7 +45,8 @@ export function generateAuditPdf(
     doc.setFontSize(8);
     doc.setTextColor(...mutedRgb);
     doc.text(brandName.toUpperCase() + '  |  ' + title, 14, 12);
-    doc.text(audit.url, 196, 12, { align: 'right' });
+    const headerUrl = audit.url.length > 45 ? audit.url.slice(0, 45) + '…' : audit.url;
+    doc.text(headerUrl, 196, 12, { align: 'right' });
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
     doc.line(14, 15, 196, 15);
@@ -291,9 +292,15 @@ export function generateAuditPdf(
 
   let prioY = 96;
   topPriorities.forEach((item, index) => {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    const cleanItem = item.replace(/^\d+\.\s*/, '');
+    const splitItem = doc.splitTextToSize(cleanItem, 155);
+    const cardHeight = Math.max(22, 11 + splitItem.length * 4.2);
+
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(14, prioY, 182, 22, 2, 2, 'FD');
+    doc.roundedRect(14, prioY, 182, cardHeight, 2, 2, 'FD');
 
     // Traffic light badge
     const badgeColor = index === 0 ? dangerRgb : (index === 1 ? warningRgb : primaryRgb);
@@ -307,21 +314,20 @@ export function generateAuditPdf(
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...darkRgb);
-    const cleanItem = item.replace(/^\d+\.\s*/, '');
-    const splitItem = doc.splitTextToSize(cleanItem, 155);
     doc.text(splitItem, 32, prioY + 11);
 
-    prioY += 26;
+    prioY += cardHeight + 4;
   });
 
   // Business Impact & Legal Exposure Overview
+  const impactBoxY = Math.max(prioY + 2, 180);
   doc.setFillColor(241, 245, 249);
-  doc.roundedRect(14, 180, 182, 54, 3, 3, 'F');
+  doc.roundedRect(14, impactBoxY, 182, 54, 3, 3, 'F');
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...darkRgb);
-  doc.text('Business Value & Legal Compliance Context', 20, 192);
+  doc.text('Business Value & Legal Compliance Context', 20, impactBoxY + 12);
 
   const impactPoints = [
     '• Market Reach: Accessible web experiences expand your addressable audience by ~16% worldwide.',
@@ -329,7 +335,7 @@ export function generateAuditPdf(
     '• Regulatory Compliance: Demonstrating proactive remediation safeguards against ADA Title III demand letters and aligns with European Accessibility Act (EAA) guidelines.'
   ];
 
-  let impY = 202;
+  let impY = impactBoxY + 22;
   impactPoints.forEach((pt) => {
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
@@ -467,14 +473,38 @@ export function generateAuditPdf(
     currentY += 14;
 
     catIssues.forEach((issue) => {
-      if (currentY > 215) {
+      if (currentY > 200) {
         doc.addPage();
         const pNum = doc.getNumberOfPages();
         addHeaderFooter(pNum, 'Developer Details: Detailed WCAG Findings');
         currentY = 26;
       }
 
-      const issueCardHeight = issue.codeSnippetFaulty ? 48 : 34;
+      // Plain-language explanation and affected element are computed up front
+      // (before drawing the card) so the card height reflects real wrapped
+      // line counts instead of a fixed guess -- real axe descriptions run far
+      // longer than the short curated mock copy this layout was tuned against.
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'italic');
+      const plainExp = issue.plainSummary || issue.description;
+      const splitPlain = doc.splitTextToSize(`Plain Summary: "${plainExp}"`, 172);
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      const affectedElementText = issue.affectedElement.length > 110
+        ? issue.affectedElement.slice(0, 110) + '…'
+        : issue.affectedElement;
+      const splitAffected = doc.splitTextToSize(`Affected Element: ${affectedElementText}`, 172);
+
+      const plainBlockHeight = splitPlain.length * 3.8;
+      const affectedY = currentY + 16 + plainBlockHeight;
+      const affectedBlockHeight = splitAffected.length * 3.6;
+      const hasCodeSnippet = Boolean(issue.codeSnippetFaulty && issue.codeSnippetFix);
+      const codeBoxY = affectedY + affectedBlockHeight;
+      const issueCardHeight = Math.max(
+        34,
+        hasCodeSnippet ? (codeBoxY - currentY) + 16 + 5 : (codeBoxY - currentY) + 4
+      );
 
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(226, 232, 240);
@@ -504,31 +534,29 @@ export function generateAuditPdf(
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(...darkRgb);
-      const plainExp = issue.plainSummary || issue.description;
-      const splitPlain = doc.splitTextToSize(`Plain Summary: "${plainExp}"`, 172);
       doc.text(splitPlain, 18, currentY + 16);
 
       // Affected element selector
       doc.setFontSize(7.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...mutedRgb);
-      doc.text(`Affected Element: ${issue.affectedElement}`, 18, currentY + 24);
+      doc.text(splitAffected, 18, affectedY);
 
       // Code patch snippet if available
-      if (issue.codeSnippetFaulty && issue.codeSnippetFix) {
+      if (hasCodeSnippet) {
         doc.setFillColor(241, 245, 249);
-        doc.rect(18, currentY + 27, 85, 16, 'F');
-        doc.rect(107, currentY + 27, 85, 16, 'F');
+        doc.rect(18, codeBoxY + 3, 85, 16, 'F');
+        doc.rect(107, codeBoxY + 3, 85, 16, 'F');
 
         doc.setFontSize(6.5);
         doc.setFont('courier', 'normal');
         doc.setTextColor(...dangerRgb);
-        doc.text('// Current HTML (Issue)', 20, currentY + 31);
-        doc.text(issue.codeSnippetFaulty.split('\n')[0].substring(0, 48), 20, currentY + 36);
+        doc.text('// Current HTML (Issue)', 20, codeBoxY + 7);
+        doc.text(issue.codeSnippetFaulty!.split('\n')[0].substring(0, 48), 20, codeBoxY + 12);
 
         doc.setTextColor(...successRgb);
-        doc.text('// Recommended Fix', 109, currentY + 31);
-        doc.text(issue.codeSnippetFix.split('\n')[0].substring(0, 48), 109, currentY + 36);
+        doc.text('// Recommended Fix', 109, codeBoxY + 7);
+        doc.text(issue.codeSnippetFix!.split('\n')[0].substring(0, 48), 109, codeBoxY + 12);
       }
 
       currentY += issueCardHeight + 5;
