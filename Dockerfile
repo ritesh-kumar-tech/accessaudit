@@ -14,7 +14,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci
-RUN npx puppeteer browsers install chrome
+RUN npx puppeteer browsers clear && npx puppeteer browsers install chrome
 
 COPY . .
 RUN npm run build
